@@ -12,21 +12,21 @@ This implementation follows a three-phase architecture (Plan, Verify, Run) that 
 
 ### 1. Foundational Infrastructure
 
-- [-] 1.1 Create project structure and core type definitions
+- [x] 1.1 Create project structure and core type definitions
   - Set up TypeScript project with tsconfig.json, ESLint, and Prettier
   - Define directory structure: `/src/{core,plan,verify,run,observability,dashboard}`
   - Create core type definitions for IR, StructuredObjective, Capability types
   - Implement JSON schemas for UserPrompt, StructuredObjective, IR, ProvenanceMetadata
   - _Requirements: 2.3, 14.4_
 
-- [-] 1.2 Implement Capability Vocabulary and Template Registry
+- [x] 1.2 Implement Capability Vocabulary and Template Registry
   - Define CapabilityType enum with 11 types (Discover, Acquire, Extract, Transform, Enrich, Resolve, Filter, Validate, Provenance, Persist, Deliver)
   - Create CapabilityDefinition interface with required parameters and schemas for each type
   - Implement Template Registry mapping capability types to n8n node templates (11 template IDs)
   - Add template validation functions
   - _Requirements: 2.1, 2.3, 4.1, 4.2_
 
-- [ ] 1.3 Implement error hierarchy and classification
+- [x] 1.3 Implement error hierarchy and classification
   - Create base PlatformError class and specialized error types (PlanningError, ValidationError, ExecutionError, DeploymentError)
   - Implement FailureClassification enum (LOGIC_FAILURE, INFRASTRUCTURE_FAILURE, EXTERNAL_SOURCE_UNAVAILABLE)
   - Create ErrorResponse interface and error formatting utilities
