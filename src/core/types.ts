@@ -406,15 +406,16 @@ export interface ContractCheckResult {
 // Execution and Observability Types
 // ============================================================================
 
-export type FailureClassification =
-  'LOGIC_FAILURE' | 'INFRASTRUCTURE_FAILURE' | 'EXTERNAL_SOURCE_UNAVAILABLE';
+// Note: FailureClassification is defined in errors.ts to avoid duplication
 
+// Import FailureClassification from errors.ts to avoid circular dependency issues
+// Note: When using FailureTrace, import FailureClassification from errors.ts
 export interface FailureTrace {
   step_id: string;
   error_message: string;
   stack_trace?: string;
   timestamp: string;
-  classification: FailureClassification;
+  classification: string; // Use string type here, constrained by FailureClassification enum in errors.ts
   retry_count: number;
 }
 
@@ -556,27 +557,19 @@ export interface TestFixture {
   mock_data: Record<string, any>[];
 }
 
+// Note: FailureClassification is defined in errors.ts
 export interface SandboxResult {
   status: 'success' | 'failure';
   sample_output?: Record<string, any>[];
-  failure_classification?: FailureClassification;
+  failure_classification?: string; // Use string type, constrained by FailureClassification enum in errors.ts
   failure_trace?: FailureTrace;
   executed_at: string;
 }
 
 // ============================================================================
 // Configuration Types
+// Note: TimeoutConfig is defined in errors.ts to avoid duplication
 // ============================================================================
-
-export interface TimeoutConfig {
-  IntakeAgent: number;
-  WorkflowPlanner: number;
-  StructuralCheck: number;
-  Compiler: number;
-  CompiledWorkflowCheck: number;
-  ContractCheck: number;
-  Sandbox: number;
-}
 
 export interface RetryStrategy {
   maxRetries: number;

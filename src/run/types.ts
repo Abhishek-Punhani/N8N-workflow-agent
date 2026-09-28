@@ -5,11 +5,13 @@
 import {
   N8NWorkflow,
   DeploymentRecord,
-  FailureClassification,
   FailureTrace,
   CredentialRequirement,
   DeploymentErrorInfo,
 } from '@core/types.js';
+
+// Import FailureClassification from errors module
+import { FailureClassification } from '@core/errors.js';
 
 // ============================================================================
 // Sandbox Types

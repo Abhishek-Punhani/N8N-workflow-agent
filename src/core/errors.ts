@@ -126,9 +126,7 @@ export interface ErrorRecoveryStrategy {
 /**
  * Get appropriate recovery strategy for a failure classification
  */
-export function getRecoveryStrategy(
-  classification: FailureClassification
-): ErrorRecoveryStrategy {
+export function getRecoveryStrategy(classification: FailureClassification): ErrorRecoveryStrategy {
   switch (classification) {
     case FailureClassification.LOGIC_FAILURE:
       return {
