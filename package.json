@@ -6,11 +6,62 @@
   "types": "dist/index.d.js",
   "scripts": {
     "build": "tsc",
+    "test": "jest --runInBand",
+    "test:run": "jest --runInBand --forceExit",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "check": "npm run lint && npm run format:check && npm run build"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/src"
+    ],
+    "testMatch": [
+      "**/*.test.ts"
+    ],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "module": "commonjs",
+            "moduleResolution": "node",
+            "baseUrl": "./src",
+            "paths": {
+              "@core/*": [
+                "core/*"
+              ],
+              "@plan/*": [
+                "plan/*"
+              ],
+              "@verify/*": [
+                "verify/*"
+              ],
+              "@run/*": [
+                "run/*"
+              ],
+              "@observability/*": [
+                "observability/*"
+              ],
+              "@dashboard/*": [
+                "dashboard/*"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "moduleDirectories": [
+      "node_modules",
+      "src"
+    ]
   },
   "keywords": [
     "ai",
@@ -21,12 +72,18 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "@types/node": "^26.6.3",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
+    "fast-check": "^4.10.2",
+    "jest": "^29.7.0",
+    "jest-runtime": "^29.7.0",
+    "jest-util": "^29.7.0",
     "prettier": "^3.2.0",
+    "ts-jest": "^29.4.14",
     "typescript": "^5.3.0"
   },
   "engines": {
