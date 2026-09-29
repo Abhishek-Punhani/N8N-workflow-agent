@@ -1,5 +1,17 @@
 /**
  * AI Data Intelligence Platform - JSON Schema Definitions
+ *
+ * These schemas are used for RUNTIME validation of data from external sources:
+ * - API requests
+ * - LLM outputs (Intake Agent, Workflow Planner)
+ * - User input
+ * - n8n webhook payloads
+ *
+ * Why JSON Schema?
+ * - TypeScript only validates at compile-time
+ * - We need runtime validation for untrusted data
+ * - Used with 'ajv' validator library
+ *
  * Based on JSON Schema Draft-07
  */
 
@@ -9,7 +21,7 @@
 
 export const UserPromptSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
-  $id: 'https://ai-data-platform.com/schemas/UserPrompt.json',
+  // $id removed - not needed for validation, only for external referencing
   type: 'object',
   required: ['id', 'prompt', 'created_at', 'status'],
   properties: {

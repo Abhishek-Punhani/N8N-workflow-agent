@@ -12,12 +12,38 @@
  * Determines appropriate handling strategy:
  * - LOGIC_FAILURE: Block execution, trigger Repair Agent, max 3 retries
  * - INFRASTRUCTURE_FAILURE: Retry with exponential backoff, up to 3 times
- * - EXTERNAL_SOURCE_UNAVAILABLE: Degraded mode, continue with available sources
+ * - EXTERNAL_SOURCE_FAILURE: External data source issues (see ExternalSourceFailureReason)
  */
 export enum FailureClassification {
   LOGIC_FAILURE = 'LOGIC_FAILURE',
   INFRASTRUCTURE_FAILURE = 'INFRASTRUCTURE_FAILURE',
-  EXTERNAL_SOURCE_UNAVAILABLE = 'EXTERNAL_SOURCE_UNAVAILABLE',
+  EXTERNAL_SOURCE_FAILURE = 'EXTERNAL_SOURCE_FAILURE',
+}
+
+/**
+ * Detailed reasons for EXTERNAL_SOURCE_FAILURE
+ *
+ * Enables fine-grained handling strategies:
+ * - RATE_LIMITED: HTTP 429, wait + retry with backoff (read Retry-After header)
+ * - CAPTCHA: Human verification required, don't retry, mark source blocked
+ * - BOT_BLOCKED: Anti-automation detected, mark source unavailable, switch to alternative
+ * - AUTH_REQUIRED: 401/403, resolve credentials or mark unauthorized
+ * - NOT_FOUND: 404, remove source from workflow
+ * - SOURCE_DOWN: 503, retry with exponential backoff
+ * - ROBOTS_RESTRICTED: robots.txt violation, respect policy, switch source
+ * - TIMEOUT: Request timeout, retry with longer timeout or mark slow
+ * - UNKNOWN: Unclassified external failure
+ */
+export enum ExternalSourceFailureReason {
+  RATE_LIMITED = 'RATE_LIMITED',
+  CAPTCHA = 'CAPTCHA',
+  BOT_BLOCKED = 'BOT_BLOCKED',
+  ROBOTS_RESTRICTED = 'ROBOTS_RESTRICTED',
+  AUTH_REQUIRED = 'AUTH_REQUIRED',
+  NOT_FOUND = 'NOT_FOUND',
+  SOURCE_DOWN = 'SOURCE_DOWN',
+  TIMEOUT = 'TIMEOUT',
+  UNKNOWN = 'UNKNOWN',
 }
 
 // ============================================================================
@@ -82,8 +108,8 @@ export const DEFAULT_RETRY_CONFIGS: Record<FailureClassification, RetryConfig> =
     maxDelayMs: 8000, // 8 seconds
     backoffMultiplier: 2, // Exponential backoff
   },
-  [FailureClassification.EXTERNAL_SOURCE_UNAVAILABLE]: {
-    maxAttempts: 0, // No retry, degraded mode
+  [FailureClassification.EXTERNAL_SOURCE_FAILURE]: {
+    maxAttempts: 0, // No automatic retry, handle per reason
     initialDelayMs: 0,
     maxDelayMs: 0,
     backoffMultiplier: 1,
@@ -142,7 +168,7 @@ export function getRecoveryStrategy(classification: FailureClassification): Erro
         retryConfig: DEFAULT_RETRY_CONFIGS[classification],
         escalateAfterAttempts: 3,
       };
-    case FailureClassification.EXTERNAL_SOURCE_UNAVAILABLE:
+    case FailureClassification.EXTERNAL_SOURCE_FAILURE:
       return {
         classification,
         action: 'degrade',
@@ -380,9 +406,16 @@ export class InfrastructureFailureError extends ExecutionError {
 }
 
 export class ExternalSourceUnavailableError extends ExecutionError {
-  constructor(message: string, context: Record<string, any> = {}) {
-    super(message, context, false, FailureClassification.EXTERNAL_SOURCE_UNAVAILABLE);
-    this.name = 'ExternalSourceUnavailableError';
+  readonly reason?: ExternalSourceFailureReason;
+
+  constructor(
+    message: string,
+    context: Record<string, any> = {},
+    reason: ExternalSourceFailureReason = ExternalSourceFailureReason.UNKNOWN
+  ) {
+    super(message, context, false, FailureClassification.EXTERNAL_SOURCE_FAILURE);
+    this.name = 'ExternalSourceFailureError';
+    this.reason = reason;
   }
 }
 

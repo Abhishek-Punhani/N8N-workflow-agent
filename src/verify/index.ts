@@ -5,3 +5,4 @@
 
 export * from './types.js';
 export { StructuralCheck } from './structural-check.js';
+export * from './compiler.js';

@@ -52,7 +52,7 @@ This implementation follows a three-phase architecture (Plan, Verify, Run) that 
   - **Property 9: Pass-Through** - Verify valid IR passes through unchanged
   - **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.6**
 
-- [ ] 2.3 Implement Compiler (IR to n8n workflow)
+- [x] 2.3 Implement Compiler (IR to n8n workflow)
   - Create Compiler class with compile() method accepting verified IR
   - Implement capability-to-template mapping using Template Registry
   - Build n8n node assembly logic with proper parameter injection
@@ -61,7 +61,7 @@ This implementation follows a three-phase architecture (Plan, Verify, Run) that 
   - Return N8NWorkflow JSON and manifest
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.6_
 
-- [ ]* 2.4 Write property tests for Compiler (Properties 10-13)
+- [x]* 2.4 Write property tests for Compiler (Properties 10-13)
   - **Property 10: Output Validity** - Produce syntactically valid n8n JSON with nodes and connections
   - **Property 11: Capability Mapping** - Map capability types to correct n8n templates
   - **Property 12: Connection Assembly** - Generate valid n8n linkages from IR connections
