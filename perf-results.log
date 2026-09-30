@@ -1,0 +1,5 @@
+--- Performance Testing (Validation Pipeline Latency & Throughput) ---
+Iterations: 10000
+Total Time: 297.60 ms
+Average Latency per pipeline run: 0.030 ms
+Throughput: 33602.06 validations / sec
