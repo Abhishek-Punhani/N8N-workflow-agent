@@ -25,7 +25,7 @@ export class ObservabilityServiceImpl {
     }
 
     const existingNodeIndex = execution.node_statuses.findIndex(
-      (n) => n.node_name === payload.node_name
+      n => n.node_name === payload.node_name
     );
 
     if (existingNodeIndex >= 0) {
@@ -60,10 +60,10 @@ export class ObservabilityServiceImpl {
     );
     execution.record_count = totalRecords;
 
-    const hasFailure = execution.node_statuses.some((n) => n.status === 'failed');
+    const hasFailure = execution.node_statuses.some(n => n.status === 'failed');
     const allSuccess =
       execution.node_statuses.length > 0 &&
-      execution.node_statuses.every((n) => n.status === 'success');
+      execution.node_statuses.every(n => n.status === 'success');
 
     const nowIso = new Date().toISOString();
 
@@ -172,10 +172,10 @@ export class ObservabilityServiceImpl {
         completed,
         failed,
         stalled,
-        running
+        running,
       },
       errors_by_type: {},
-      last_updated: new Date().toISOString()
+      last_updated: new Date().toISOString(),
     };
   }
 

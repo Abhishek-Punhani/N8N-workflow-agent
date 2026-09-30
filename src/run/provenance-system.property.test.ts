@@ -25,7 +25,7 @@ import type { ValidationStatus } from '../core/types.js';
 const arbRecord = fc.dictionary(
   fc.string({ minLength: 1, maxLength: 10 }).filter(s => s !== '_provenance'),
   fc.oneof(fc.integer(), fc.string({ maxLength: 20 }), fc.boolean()),
-  { minKeys: 1, maxKeys: 8 },
+  { minKeys: 1, maxKeys: 8 }
 );
 
 /** Valid extraction_confidence in [0.0, 1.0]. */
@@ -64,9 +64,9 @@ describe('Property 18: All enriched records contain non-null _provenance with al
             expect('dedupe_group' in r._provenance).toBe(true);
             expect('validation_status' in r._provenance).toBe(true);
           }
-        },
+        }
       ),
-      { numRuns: 100 },
+      { numRuns: 100 }
     );
   });
 });
@@ -100,9 +100,9 @@ describe('Property 19: source_url never null in enriched[] when require_source_u
             expect(result.enriched).toHaveLength(0);
             expect(result.rejected).toHaveLength(records.length);
           }
-        },
+        }
       ),
-      { numRuns: 100 },
+      { numRuns: 100 }
     );
   });
 });
@@ -116,27 +116,22 @@ describe('Property 20: Identical records share dedupe_group and only highest con
     const system = new ProvenanceSystem();
 
     fc.assert(
-      fc.property(
-        arbRecord,
-        arbConfidence,
-        arbConfidence,
-        (baseRecord, conf1Raw, _conf2Raw) => {
-          // Create two byte-identical records (different confidence values)
-          const r1 = { ...baseRecord };
-          const r2 = { ...baseRecord };
+      fc.property(arbRecord, arbConfidence, arbConfidence, (baseRecord, conf1Raw, _conf2Raw) => {
+        // Create two byte-identical records (different confidence values)
+        const r1 = { ...baseRecord };
+        const r2 = { ...baseRecord };
 
-          const result = system.enrich({
-            records: [r1, r2],
-            extraction_confidence: conf1Raw,
-          });
+        const result = system.enrich({
+          records: [r1, r2],
+          extraction_confidence: conf1Raw,
+        });
 
-          // Both get the same confidence (same enrich call), so dedupe keeps 1
-          expect(result.enriched).toHaveLength(1);
-          expect(result.deduplication.duplicate_count).toBe(1);
-          expect(result.deduplication.original_count).toBe(2);
-        },
-      ),
-      { numRuns: 100 },
+        // Both get the same confidence (same enrich call), so dedupe keeps 1
+        expect(result.enriched).toHaveLength(1);
+        expect(result.deduplication.duplicate_count).toBe(1);
+        expect(result.deduplication.original_count).toBe(2);
+      }),
+      { numRuns: 100 }
     );
   });
 
@@ -151,11 +146,14 @@ describe('Property 20: Identical records share dedupe_group and only highest con
 
     // The two enriched records should have the SAME dedupe_group
     expect(result1.enriched[0]._provenance.dedupe_group).toBe(
-      result2.enriched[0]._provenance.dedupe_group,
+      result2.enriched[0]._provenance.dedupe_group
     );
 
     // Merged via a combined call: high confidence wins
-    const combined = system.enrich({ records: [baseRecord, baseRecord], extraction_confidence: 0.9 });
+    const combined = system.enrich({
+      records: [baseRecord, baseRecord],
+      extraction_confidence: 0.9,
+    });
     expect(combined.enriched[0]._provenance.extraction_confidence).toBe(0.9);
   });
 });
@@ -182,22 +180,22 @@ describe('Property 21: extraction_confidence is in [0.0, 1.0] with ≤ 4 decimal
             // 4 decimal places: Math.round(c * 10000) / 10000 === c
             expect(Math.round(conf * 10000) / 10000).toBe(conf);
           }
-        },
+        }
       ),
-      { numRuns: 100 },
+      { numRuns: 100 }
     );
   });
 
   it('throws ValidationError when extraction_confidence is out of range', () => {
     const system = new ProvenanceSystem();
 
-    expect(() =>
-      system.enrich({ records: [{ x: 1 }], extraction_confidence: 1.5 }),
-    ).toThrow('extraction_confidence must be a number in [0.0, 1.0]');
+    expect(() => system.enrich({ records: [{ x: 1 }], extraction_confidence: 1.5 })).toThrow(
+      'extraction_confidence must be a number in [0.0, 1.0]'
+    );
 
-    expect(() =>
-      system.enrich({ records: [{ x: 1 }], extraction_confidence: -0.1 }),
-    ).toThrow('extraction_confidence must be a number in [0.0, 1.0]');
+    expect(() => system.enrich({ records: [{ x: 1 }], extraction_confidence: -0.1 })).toThrow(
+      'extraction_confidence must be a number in [0.0, 1.0]'
+    );
   });
 });
 
@@ -226,9 +224,9 @@ describe('Property 22: validation_status is always one of the 4 valid enum value
           for (const r of result.enriched) {
             expect(VALID_STATUSES).toContain(r._provenance.validation_status);
           }
-        },
+        }
       ),
-      { numRuns: 100 },
+      { numRuns: 100 }
     );
   });
 });

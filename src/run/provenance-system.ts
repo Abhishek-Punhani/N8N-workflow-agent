@@ -102,15 +102,13 @@ export class ProvenanceSystem {
   private determineValidationStatus(
     record: Record<string, any>,
     resolvedSourceUrl: string | null,
-    requireSourceUrl: boolean,
+    requireSourceUrl: boolean
   ): ValidationStatus {
     if (requireSourceUrl && !resolvedSourceUrl) {
       return 'invalid:missing_field';
     }
     // Detect null/undefined values in top-level required-looking fields
-    const hasNullRequiredField = Object.values(record).some(
-      v => v === null || v === undefined,
-    );
+    const hasNullRequiredField = Object.values(record).some(v => v === null || v === undefined);
     if (hasNullRequiredField) {
       return 'invalid:missing_field';
     }
@@ -145,7 +143,7 @@ export class ProvenanceSystem {
       throw new ValidationError(
         `extraction_confidence must be a number in [0.0, 1.0], got: ${String(extraction_confidence)}`,
         { extraction_confidence },
-        false,
+        false
       );
     }
 
@@ -162,7 +160,9 @@ export class ProvenanceSystem {
         resolvedUrl = source_url;
       } else {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const existing = (record['_provenance'] as Record<string, unknown> | undefined)?.['source_url'];
+        const existing = (record['_provenance'] as Record<string, unknown> | undefined)?.[
+          'source_url'
+        ];
         resolvedUrl = typeof existing === 'string' ? existing : null;
       }
 
@@ -193,7 +193,10 @@ export class ProvenanceSystem {
     for (const candidate of candidates) {
       const group = candidate._provenance.dedupe_group;
       const existing = dedupeMap.get(group);
-      if (!existing || candidate._provenance.extraction_confidence > existing._provenance.extraction_confidence) {
+      if (
+        !existing ||
+        candidate._provenance.extraction_confidence > existing._provenance.extraction_confidence
+      ) {
         dedupeMap.set(group, candidate);
       }
     }
