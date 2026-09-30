@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  platform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-data-intelligence-platform:latest
+    container_name: ai-data-platform
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - N8N_BASE_URL=http://n8n:5678
+      - N8N_API_KEY=${N8N_API_KEY}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_ENDPOINT=${LLM_ENDPOINT:-https://api.openai.com/v1}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o}
+      - DB_HOST=postgres
+      - DB_USER=${DB_USER:-ai_platform}
+      - DB_PASSWORD=${DB_PASSWORD:-ai_secret}
+      - DB_NAME=${DB_NAME:-ai_data_db}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      n8n:
+        condition: service_started
+    networks:
+      - ai-network
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n-platform
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=n8n
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=UTC
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - ai-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: ai-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER:-ai_platform}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-ai_secret}
+      - POSTGRES_DB=${DB_NAME:-ai_data_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ai_platform}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai-network
+
+volumes:
+  n8n_data:
+  postgres_data:
+
+networks:
+  ai-network:
+    driver: bridge

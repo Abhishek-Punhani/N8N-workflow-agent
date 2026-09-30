@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ai-platform-config
+  namespace: ai-data
+data:
+  NODE_ENV: "production"
+  N8N_BASE_URL: "http://n8n-service.ai-data.svc.cluster.local:5678"
+  LLM_ENDPOINT: "https://api.openai.com/v1"
+  LLM_MODEL: "gpt-4o"
+  DB_HOST: "postgres-service.ai-data.svc.cluster.local"
+  DB_NAME: "ai_data_db"
+  DB_USER: "ai_platform"
+  LIMIT_MAX_RECORDS: "1000000"
+  LIMIT_MAX_EXPORT_SIZE_MB: "500"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-platform
+  namespace: ai-data
+  labels:
+    app: ai-platform
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-platform
+  template:
+    metadata:
+      labels:
+        app: ai-platform
+    spec:
+      containers:
+        - name: platform
+          image: ai-data-intelligence-platform:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: ai-platform-config
+            - secretRef:
+                name: ai-platform-secrets
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-platform-service
+  namespace: ai-data
+spec:
+  type: ClusterIP
+  selector:
+    app: ai-platform
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000

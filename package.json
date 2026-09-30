@@ -6,6 +6,7 @@
   "types": "dist/index.d.js",
   "scripts": {
     "build": "tsc",
+    "start": "node dist/server.js",
     "test": "jest --runInBand",
     "test:run": "jest --runInBand --forceExit",
     "lint": "eslint src --ext .ts",
