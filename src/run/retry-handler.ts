@@ -36,7 +36,7 @@ export class RetryHandler {
     // max_retries = number of *retry* attempts (not including initial attempt).
     const coreConfig = DEFAULT_RETRY_CONFIGS[FailureClassification.INFRASTRUCTURE_FAILURE];
     this.config = {
-      max_retries: config?.max_retries ?? (coreConfig.maxAttempts - 1), // maxAttempts=3 → 2 retries
+      max_retries: config?.max_retries ?? coreConfig.maxAttempts - 1, // maxAttempts=3 → 2 retries
       base_delay_ms: config?.base_delay_ms ?? coreConfig.initialDelayMs,
       max_delay_ms: config?.max_delay_ms ?? coreConfig.maxDelayMs,
       backoff_multiplier: config?.backoff_multiplier ?? coreConfig.backoffMultiplier,
@@ -57,7 +57,9 @@ export class RetryHandler {
    *                     INFRASTRUCTURE_FAILURE classification.
    * @returns          RetryResult with succeeded flag, attempt count, total delay.
    */
-  public async execute<T extends { status: string; failure_classification?: FailureClassification }>(
+  public async execute<
+    T extends { status: string; failure_classification?: FailureClassification },
+  >(
     operation: () => Promise<T>,
     shouldRetryFn?: (result: T) => boolean
   ): Promise<{ result: T; retry_result: RetryResult }> {
@@ -123,16 +125,14 @@ export class RetryHandler {
    */
   public isExhausted(attempt: number): boolean {
     // attempt 1 = 0 retries used, attempt 2 = 1 retry used, etc.
-    return (attempt - 1) >= this.config.max_retries;
+    return attempt - 1 >= this.config.max_retries;
   }
 
   /**
    * Return the full delay schedule (one entry per retry) for inspection.
    */
   public getDelaySchedule(): number[] {
-    return Array.from({ length: this.config.max_retries }, (_, i) =>
-      this.calculateDelay(i + 1)
-    );
+    return Array.from({ length: this.config.max_retries }, (_, i) => this.calculateDelay(i + 1));
   }
 
   // -------------------------------------------------------------------------

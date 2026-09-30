@@ -39,7 +39,11 @@ describe('RetryHandler', () => {
 
     const promise = handler.execute(async (): Promise<FakeResult> => {
       calls++;
-      if (calls === 1) return { status: 'failure', failure_classification: FailureClassification.INFRASTRUCTURE_FAILURE };
+      if (calls === 1)
+        return {
+          status: 'failure',
+          failure_classification: FailureClassification.INFRASTRUCTURE_FAILURE,
+        };
       return { status: 'success' };
     });
     await jest.runAllTimersAsync();
@@ -57,7 +61,10 @@ describe('RetryHandler', () => {
 
     const promise = handler.execute(async (): Promise<FakeResult> => {
       calls++;
-      return { status: 'failure', failure_classification: FailureClassification.INFRASTRUCTURE_FAILURE };
+      return {
+        status: 'failure',
+        failure_classification: FailureClassification.INFRASTRUCTURE_FAILURE,
+      };
     });
     await jest.runAllTimersAsync();
     const { result, retry_result } = await promise;
@@ -89,7 +96,10 @@ describe('RetryHandler', () => {
 
     const { retry_result } = await handler.execute(async (): Promise<FakeResult> => {
       calls++;
-      return { status: 'failure', failure_classification: FailureClassification.EXTERNAL_SOURCE_FAILURE };
+      return {
+        status: 'failure',
+        failure_classification: FailureClassification.EXTERNAL_SOURCE_FAILURE,
+      };
     });
 
     expect(calls).toBe(1);
@@ -105,12 +115,17 @@ describe('RetryHandler', () => {
     const schedule = handler.getDelaySchedule();
 
     expect(schedule.length).toBe(2); // 2 retries by default
-    expect(schedule[0]).toBe(1000);  // 1s
-    expect(schedule[1]).toBe(2000);  // 2s
+    expect(schedule[0]).toBe(1000); // 1s
+    expect(schedule[1]).toBe(2000); // 2s
   });
 
   it('delays are capped at max_delay_ms', () => {
-    const handler = new RetryHandler({ max_retries: 10, base_delay_ms: 1000, max_delay_ms: 4000, backoff_multiplier: 2 });
+    const handler = new RetryHandler({
+      max_retries: 10,
+      base_delay_ms: 1000,
+      max_delay_ms: 4000,
+      backoff_multiplier: 2,
+    });
     const schedule = handler.getDelaySchedule();
     expect(Math.max(...schedule)).toBe(4000);
   });
@@ -148,7 +163,10 @@ describe('RetryHandler', () => {
 
     const promise = handler.execute(async (): Promise<FakeResult> => {
       calls++;
-      return { status: 'failure', failure_classification: FailureClassification.INFRASTRUCTURE_FAILURE };
+      return {
+        status: 'failure',
+        failure_classification: FailureClassification.INFRASTRUCTURE_FAILURE,
+      };
     });
     await jest.runAllTimersAsync();
     await promise;

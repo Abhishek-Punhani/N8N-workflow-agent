@@ -179,9 +179,7 @@ describe('CompiledWorkflowCheck', () => {
 
   describe('invalid workflow rejection', () => {
     it('returns status "invalid" when the n8n API responds with 400', async () => {
-      fetchSpy.mockResolvedValueOnce(
-        mockResponse(400, { message: 'Workflow validation failed' })
-      );
+      fetchSpy.mockResolvedValueOnce(mockResponse(400, { message: 'Workflow validation failed' }));
 
       const result = await checker.validate(makeInput());
 
@@ -189,9 +187,7 @@ describe('CompiledWorkflowCheck', () => {
     });
 
     it('captures a single-message 400 error into errors array', async () => {
-      fetchSpy.mockResolvedValueOnce(
-        mockResponse(400, { message: 'Invalid node configuration' })
-      );
+      fetchSpy.mockResolvedValueOnce(mockResponse(400, { message: 'Invalid node configuration' }));
 
       const result = await checker.validate(makeInput());
 

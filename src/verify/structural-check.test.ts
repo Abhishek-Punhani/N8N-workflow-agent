@@ -92,22 +92,20 @@ function makeValidStep(id: string, type: CapabilityType): IRStep {
 
 /** Build a minimal valid IR with `n` steps and no connections. */
 const arbValidIR = (minSteps = 1, maxSteps = 5): fc.Arbitrary<IR> =>
-  fc
-    .uniqueArray(arbId, { minLength: minSteps, maxLength: maxSteps })
-    .chain(ids =>
-      fc
-        .tuple(...ids.map(id => arbValidCapabilityType.map(type => makeValidStep(id, type))))
-        .map(steps => ({
-          steps,
-          connections: [] as IRConnection[],
-          field_mappings: [],
-          metadata: {
-            objective_hash: 'testhash',
-            created_at: new Date().toISOString(),
-            planner_version: '1.0.0',
-          },
-        }))
-    );
+  fc.uniqueArray(arbId, { minLength: minSteps, maxLength: maxSteps }).chain(ids =>
+    fc
+      .tuple(...ids.map(id => arbValidCapabilityType.map(type => makeValidStep(id, type))))
+      .map(steps => ({
+        steps,
+        connections: [] as IRConnection[],
+        field_mappings: [],
+        metadata: {
+          objective_hash: 'testhash',
+          created_at: new Date().toISOString(),
+          planner_version: '1.0.0',
+        },
+      }))
+  );
 
 // ============================================================================
 // Property 5: Step Type Validation
@@ -137,38 +135,34 @@ describe('Property 5: Step Type Validation', () => {
 
   it('rejects IRs that contain an invalid step type', () => {
     fc.assert(
-      fc.property(
-        arbId,
-        arbInvalidCapabilityType,
-        (stepId, badType) => {
-          const ir: IR = {
-            steps: [
-              {
-                id: stepId,
-                type: badType as CapabilityType,
-                parameters: {},
-                input_schema: { type: 'object' },
-                output_schema: { type: 'object' },
-              },
-            ],
-            connections: [],
-            field_mappings: [],
-            metadata: {
-              objective_hash: 'hash',
-              created_at: new Date().toISOString(),
-              planner_version: '1.0.0',
+      fc.property(arbId, arbInvalidCapabilityType, (stepId, badType) => {
+        const ir: IR = {
+          steps: [
+            {
+              id: stepId,
+              type: badType as CapabilityType,
+              parameters: {},
+              input_schema: { type: 'object' },
+              output_schema: { type: 'object' },
             },
-          };
+          ],
+          connections: [],
+          field_mappings: [],
+          metadata: {
+            objective_hash: 'hash',
+            created_at: new Date().toISOString(),
+            planner_version: '1.0.0',
+          },
+        };
 
-          const result = checker.validate(ir);
-          expect(result.status).toBe('invalid');
+        const result = checker.validate(ir);
+        expect(result.status).toBe('invalid');
 
-          const stepTypeErrors = (result.errors ?? []).filter(
-            e => e.error_type === 'INVALID_STEP_TYPE'
-          );
-          expect(stepTypeErrors.length).toBeGreaterThanOrEqual(1);
-        }
-      ),
+        const stepTypeErrors = (result.errors ?? []).filter(
+          e => e.error_type === 'INVALID_STEP_TYPE'
+        );
+        expect(stepTypeErrors.length).toBeGreaterThanOrEqual(1);
+      }),
       { numRuns: 100 }
     );
   });
@@ -206,47 +200,43 @@ describe('Property 6: Parameter Validation', () => {
     );
 
     fc.assert(
-      fc.property(
-        arbId,
-        fc.constantFrom(...typesWithParams),
-        (stepId, type) => {
-          const requiredParams = CAPABILITY_VOCABULARY[type].requiredParameters;
-          const paramNames = Object.keys(requiredParams);
-          // Remove the first required parameter to guarantee a MISSING_PARAMETER
-          const incompleteParams = buildValidParams(type);
-          delete incompleteParams[paramNames[0]];
+      fc.property(arbId, fc.constantFrom(...typesWithParams), (stepId, type) => {
+        const requiredParams = CAPABILITY_VOCABULARY[type].requiredParameters;
+        const paramNames = Object.keys(requiredParams);
+        // Remove the first required parameter to guarantee a MISSING_PARAMETER
+        const incompleteParams = buildValidParams(type);
+        delete incompleteParams[paramNames[0]];
 
-          const ir: IR = {
-            steps: [
-              {
-                id: stepId,
-                type,
-                parameters: incompleteParams as Record<string, unknown>,
-                input_schema: { type: 'object' },
-                output_schema: { type: 'object' },
-              },
-            ],
-            connections: [],
-            field_mappings: [],
-            metadata: {
-              objective_hash: 'hash',
-              created_at: new Date().toISOString(),
-              planner_version: '1.0.0',
+        const ir: IR = {
+          steps: [
+            {
+              id: stepId,
+              type,
+              parameters: incompleteParams as Record<string, unknown>,
+              input_schema: { type: 'object' },
+              output_schema: { type: 'object' },
             },
-          };
+          ],
+          connections: [],
+          field_mappings: [],
+          metadata: {
+            objective_hash: 'hash',
+            created_at: new Date().toISOString(),
+            planner_version: '1.0.0',
+          },
+        };
 
-          const result = checker.validate(ir);
-          expect(result.status).toBe('invalid');
+        const result = checker.validate(ir);
+        expect(result.status).toBe('invalid');
 
-          const missingErrors = (result.errors ?? []).filter(
-            e => e.error_type === 'MISSING_PARAMETER'
-          );
-          expect(missingErrors.length).toBeGreaterThanOrEqual(1);
-          // The error must reference the removed parameter
-          const targetError = missingErrors.find(e => e.location.parameter === paramNames[0]);
-          expect(targetError).toBeDefined();
-        }
-      ),
+        const missingErrors = (result.errors ?? []).filter(
+          e => e.error_type === 'MISSING_PARAMETER'
+        );
+        expect(missingErrors.length).toBeGreaterThanOrEqual(1);
+        // The error must reference the removed parameter
+        const targetError = missingErrors.find(e => e.location.parameter === paramNames[0]);
+        expect(targetError).toBeDefined();
+      }),
       { numRuns: 100 }
     );
   });
@@ -474,53 +464,49 @@ describe('Property 8: Error Precision', () => {
   it('every error has a non-empty step_id, known error_type, non-empty message, and matching location.step', () => {
     // Generate IRs with at least one invalid step type to guarantee errors
     fc.assert(
-      fc.property(
-        arbId,
-        arbInvalidCapabilityType,
-        (stepId, badType) => {
-          const ir: IR = {
-            steps: [
-              {
-                id: stepId,
-                type: badType as CapabilityType,
-                parameters: {},
-                input_schema: { type: 'object' },
-                output_schema: { type: 'object' },
-              },
-            ],
-            connections: [],
-            field_mappings: [],
-            metadata: {
-              objective_hash: 'hash',
-              created_at: new Date().toISOString(),
-              planner_version: '1.0.0',
+      fc.property(arbId, arbInvalidCapabilityType, (stepId, badType) => {
+        const ir: IR = {
+          steps: [
+            {
+              id: stepId,
+              type: badType as CapabilityType,
+              parameters: {},
+              input_schema: { type: 'object' },
+              output_schema: { type: 'object' },
             },
-          };
+          ],
+          connections: [],
+          field_mappings: [],
+          metadata: {
+            objective_hash: 'hash',
+            created_at: new Date().toISOString(),
+            planner_version: '1.0.0',
+          },
+        };
 
-          const result = checker.validate(ir);
-          expect(result.status).toBe('invalid');
-          expect(result.errors).toBeDefined();
-          expect(result.errors!.length).toBeGreaterThan(0);
+        const result = checker.validate(ir);
+        expect(result.status).toBe('invalid');
+        expect(result.errors).toBeDefined();
+        expect(result.errors!.length).toBeGreaterThan(0);
 
-          for (const err of result.errors!) {
-            // step_id must be a non-empty string
-            expect(typeof err.step_id).toBe('string');
-            expect(err.step_id.length).toBeGreaterThan(0);
+        for (const err of result.errors!) {
+          // step_id must be a non-empty string
+          expect(typeof err.step_id).toBe('string');
+          expect(err.step_id.length).toBeGreaterThan(0);
 
-            // error_type must be one of the 4 known values
-            expect(KNOWN_ERROR_TYPES).toContain(err.error_type);
+          // error_type must be one of the 4 known values
+          expect(KNOWN_ERROR_TYPES).toContain(err.error_type);
 
-            // message must be a non-empty string
-            expect(typeof err.message).toBe('string');
-            expect(err.message.length).toBeGreaterThan(0);
+          // message must be a non-empty string
+          expect(typeof err.message).toBe('string');
+          expect(err.message.length).toBeGreaterThan(0);
 
-            // location.step must equal step_id
-            expect(err.location).toBeDefined();
-            expect(typeof err.location.step).toBe('string');
-            expect(err.location.step).toBe(err.step_id);
-          }
+          // location.step must equal step_id
+          expect(err.location).toBeDefined();
+          expect(typeof err.location.step).toBe('string');
+          expect(err.location.step).toBe(err.step_id);
         }
-      ),
+      }),
       { numRuns: 100 }
     );
   });
@@ -531,44 +517,40 @@ describe('Property 8: Error Precision', () => {
     );
 
     fc.assert(
-      fc.property(
-        arbId,
-        fc.constantFrom(...typesWithParams),
-        (stepId, type) => {
-          const requiredParams = CAPABILITY_VOCABULARY[type].requiredParameters;
-          const firstParam = Object.keys(requiredParams)[0];
+      fc.property(arbId, fc.constantFrom(...typesWithParams), (stepId, type) => {
+        const requiredParams = CAPABILITY_VOCABULARY[type].requiredParameters;
+        const firstParam = Object.keys(requiredParams)[0];
 
-          const incompleteParams = buildValidParams(type);
-          delete incompleteParams[firstParam];
+        const incompleteParams = buildValidParams(type);
+        delete incompleteParams[firstParam];
 
-          const ir: IR = {
-            steps: [
-              {
-                id: stepId,
-                type,
-                parameters: incompleteParams as Record<string, unknown>,
-                input_schema: { type: 'object' },
-                output_schema: { type: 'object' },
-              },
-            ],
-            connections: [],
-            field_mappings: [],
-            metadata: {
-              objective_hash: 'hash',
-              created_at: new Date().toISOString(),
-              planner_version: '1.0.0',
+        const ir: IR = {
+          steps: [
+            {
+              id: stepId,
+              type,
+              parameters: incompleteParams as Record<string, unknown>,
+              input_schema: { type: 'object' },
+              output_schema: { type: 'object' },
             },
-          };
+          ],
+          connections: [],
+          field_mappings: [],
+          metadata: {
+            objective_hash: 'hash',
+            created_at: new Date().toISOString(),
+            planner_version: '1.0.0',
+          },
+        };
 
-          const result = checker.validate(ir);
-          const missingErr = (result.errors ?? []).find(
-            e => e.error_type === 'MISSING_PARAMETER' && e.location.parameter === firstParam
-          );
+        const result = checker.validate(ir);
+        const missingErr = (result.errors ?? []).find(
+          e => e.error_type === 'MISSING_PARAMETER' && e.location.parameter === firstParam
+        );
 
-          expect(missingErr).toBeDefined();
-          expect(missingErr!.location.parameter).toBe(firstParam);
-        }
-      ),
+        expect(missingErr).toBeDefined();
+        expect(missingErr!.location.parameter).toBe(firstParam);
+      }),
       { numRuns: 100 }
     );
   });

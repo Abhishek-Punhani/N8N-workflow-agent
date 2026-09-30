@@ -46,7 +46,13 @@ function makeNode(id: string, name: string, type = 'n8n-nodes-base.HTTPRequest')
 }
 
 function makeWorkflow(nodes: N8NNode[]): N8NWorkflow {
-  return { name: 'Integration Test Workflow', nodes, connections: {}, settings: {}, staticData: {} };
+  return {
+    name: 'Integration Test Workflow',
+    nodes,
+    connections: {},
+    settings: {},
+    staticData: {},
+  };
 }
 
 function makeInput(
@@ -128,7 +134,10 @@ class StalledSandbox extends Sandbox {
     const executedAt = new Date().toISOString();
     try {
       await (this as any).runWithTimeout(
-        (): Promise<Record<string, any>[]> => new Promise(() => { /* never resolves */ }),
+        (): Promise<Record<string, any>[]> =>
+          new Promise(() => {
+            /* never resolves */
+          }),
         timeoutMs
       );
       return { status: 'success', sample_output: [], executed_at: executedAt };
@@ -214,11 +223,7 @@ describe('Sandbox integration', () => {
       const fixtures: TestFixture[] = [
         {
           step_id: 'n1',
-          mock_data: [
-            { name: 'startup-1' },
-            { name: 'startup-2' },
-            { name: 'startup-3' },
-          ],
+          mock_data: [{ name: 'startup-1' }, { name: 'startup-2' }, { name: 'startup-3' }],
         },
       ];
 
@@ -274,9 +279,7 @@ describe('Sandbox integration', () => {
         }
       }
 
-      const result = await new LogicErrorSandbox().execute(
-        makeInput([makeNode('n1', 'Validate')])
-      );
+      const result = await new LogicErrorSandbox().execute(makeInput([makeNode('n1', 'Validate')]));
 
       expect(isNaN(new Date(result.failure_trace!.timestamp).getTime())).toBe(false);
     });
@@ -301,9 +304,7 @@ describe('Sandbox integration', () => {
         }
       }
 
-      const result = await new LogicErrorSandbox().execute(
-        makeInput([makeNode('n1', 'Validate')])
-      );
+      const result = await new LogicErrorSandbox().execute(makeInput([makeNode('n1', 'Validate')]));
 
       // Verify via FailureClassifier that the recommended action is repair
       const classifier = new FailureClassifier();

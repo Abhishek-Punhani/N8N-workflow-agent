@@ -157,9 +157,7 @@ export class ContractCheck {
     if (deliverNode) return deliverNode;
 
     // Fallback: last node
-    return workflow.nodes.length > 0
-      ? workflow.nodes[workflow.nodes.length - 1]
-      : undefined;
+    return workflow.nodes.length > 0 ? workflow.nodes[workflow.nodes.length - 1] : undefined;
   }
 
   // -------------------------------------------------------------------------
@@ -205,8 +203,12 @@ export class ContractCheck {
 
     // (e) Top-level parameter keys as fallback field names
     for (const key of Object.keys(params)) {
-      if (key !== 'responseBody' && key !== 'fields' &&
-          key !== 'outputFields' && key !== 'mappings') {
+      if (
+        key !== 'responseBody' &&
+        key !== 'fields' &&
+        key !== 'outputFields' &&
+        key !== 'mappings'
+      ) {
         fields.add(key);
       }
     }

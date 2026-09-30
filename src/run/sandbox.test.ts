@@ -63,7 +63,10 @@ class StalledSandbox extends Sandbox {
     try {
       // Cast to any to access private runWithTimeout — acceptable in tests.
       await (this as any).runWithTimeout(
-        (): Promise<Record<string, any>[]> => new Promise(() => { /* never resolves */ }),
+        (): Promise<Record<string, any>[]> =>
+          new Promise(() => {
+            /* never resolves */
+          }),
         timeoutMs
       );
       return { status: 'success', sample_output: [], executed_at: executedAt };

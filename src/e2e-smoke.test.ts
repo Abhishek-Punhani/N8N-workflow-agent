@@ -44,14 +44,14 @@ function buildIndianAIStartupsIR(): IR {
         id: 'acquire-01',
         type: 'Acquire',
         parameters: { urls: ['https://example.com/startups'], method: 'GET' },
-        input_schema:  { type: 'object', properties: { source_urls: { type: 'array' } } },
+        input_schema: { type: 'object', properties: { source_urls: { type: 'array' } } },
         output_schema: { type: 'object', properties: { contents: { type: 'array' } } },
       },
       {
         id: 'extract-01',
         type: 'Extract',
         parameters: { content: 'html', schema: { name: 'string', founded: 'number' } },
-        input_schema:  { type: 'object', properties: { contents: { type: 'array' } } },
+        input_schema: { type: 'object', properties: { contents: { type: 'array' } } },
         output_schema: { type: 'object', properties: { records: { type: 'array' } } },
       },
       {
@@ -61,14 +61,14 @@ function buildIndianAIStartupsIR(): IR {
           records: [],
           conditions: [{ field: 'country', operator: 'equals', value: 'India' }],
         },
-        input_schema:  { type: 'object', properties: { records: { type: 'array' } } },
+        input_schema: { type: 'object', properties: { records: { type: 'array' } } },
         output_schema: {
           type: 'object',
           properties: {
             filtered_records: { type: 'array' },
-            name:             { type: 'string' },
-            founded:          { type: 'number' },
-            source_url:       { type: 'string' },
+            name: { type: 'string' },
+            founded: { type: 'number' },
+            source_url: { type: 'string' },
           },
         },
       },
@@ -81,12 +81,12 @@ function buildIndianAIStartupsIR(): IR {
           // Expose output fields so ContractCheck can find them
           fields: [{ name: 'name' }, { name: 'founded' }, { name: 'source_url' }],
         },
-        input_schema:  { type: 'object', properties: { filtered_records: { type: 'array' } } },
+        input_schema: { type: 'object', properties: { filtered_records: { type: 'array' } } },
         output_schema: {
           type: 'object',
           properties: {
-            name:       { type: 'string' },
-            founded:    { type: 'number' },
+            name: { type: 'string' },
+            founded: { type: 'number' },
             source_url: { type: 'string' },
           },
         },
@@ -94,10 +94,30 @@ function buildIndianAIStartupsIR(): IR {
     ] as IRStep[],
 
     connections: [
-      { from_step: 'discover-01', from_output: 'source_urls',      to_step: 'acquire-01', to_input: 'source_urls'      },
-      { from_step: 'acquire-01',  from_output: 'contents',         to_step: 'extract-01', to_input: 'contents'         },
-      { from_step: 'extract-01',  from_output: 'records',          to_step: 'filter-01',  to_input: 'records'          },
-      { from_step: 'filter-01',   from_output: 'filtered_records', to_step: 'deliver-01', to_input: 'filtered_records' },
+      {
+        from_step: 'discover-01',
+        from_output: 'source_urls',
+        to_step: 'acquire-01',
+        to_input: 'source_urls',
+      },
+      {
+        from_step: 'acquire-01',
+        from_output: 'contents',
+        to_step: 'extract-01',
+        to_input: 'contents',
+      },
+      {
+        from_step: 'extract-01',
+        from_output: 'records',
+        to_step: 'filter-01',
+        to_input: 'records',
+      },
+      {
+        from_step: 'filter-01',
+        from_output: 'filtered_records',
+        to_step: 'deliver-01',
+        to_input: 'filtered_records',
+      },
     ] as IRConnection[],
 
     field_mappings: [],
@@ -110,25 +130,43 @@ function buildIndianAIStartupsIR(): IR {
 }
 
 const REQUIRED_FIELDS: FieldDefinition[] = [
-  { name: 'name',       type: 'string', required: true },
-  { name: 'founded',    type: 'number', required: true },
-  { name: 'source_url', type: 'url',    required: true },
+  { name: 'name', type: 'string', required: true },
+  { name: 'founded', type: 'number', required: true },
+  { name: 'source_url', type: 'url', required: true },
 ];
 
 const REAL_FIXTURES = [
   {
     step_id: 'discover-01',
     mock_data: [
-      { url: 'https://techcrunch.com/sarvam-ai',  type: 'article' },
+      { url: 'https://techcrunch.com/sarvam-ai', type: 'article' },
       { url: 'https://techcrunch.com/krutrim-ai', type: 'article' },
     ],
   },
   {
     step_id: 'extract-01',
     mock_data: [
-      { name: 'Sarvam AI',  founded: 2023, country: 'India', website: 'sarvam.ai',  source_url: 'https://techcrunch.com/sarvam-ai' },
-      { name: 'Krutrim AI', founded: 2023, country: 'India', website: 'krutrim.com', source_url: 'https://techcrunch.com/krutrim-ai' },
-      { name: 'OpenAI',     founded: 2015, country: 'USA',   website: 'openai.com',  source_url: 'https://techcrunch.com/openai' },
+      {
+        name: 'Sarvam AI',
+        founded: 2023,
+        country: 'India',
+        website: 'sarvam.ai',
+        source_url: 'https://techcrunch.com/sarvam-ai',
+      },
+      {
+        name: 'Krutrim AI',
+        founded: 2023,
+        country: 'India',
+        website: 'krutrim.com',
+        source_url: 'https://techcrunch.com/krutrim-ai',
+      },
+      {
+        name: 'OpenAI',
+        founded: 2015,
+        country: 'USA',
+        website: 'openai.com',
+        source_url: 'https://techcrunch.com/openai',
+      },
     ],
   },
 ];
@@ -141,10 +179,21 @@ describe('Phase 1 — Core: Template Registry', () => {
   it('has all 11 capability types registered', () => {
     const types = Object.keys(TEMPLATE_REGISTRY);
     expect(types).toHaveLength(11);
-    expect(types).toEqual(expect.arrayContaining([
-      'Discover','Acquire','Extract','Transform','Enrich',
-      'Resolve','Filter','Validate','Provenance','Persist','Deliver',
-    ]));
+    expect(types).toEqual(
+      expect.arrayContaining([
+        'Discover',
+        'Acquire',
+        'Extract',
+        'Transform',
+        'Enrich',
+        'Resolve',
+        'Filter',
+        'Validate',
+        'Provenance',
+        'Persist',
+        'Deliver',
+      ])
+    );
   });
 
   it('each template has a non-empty node_type and template_id', () => {
@@ -452,7 +501,10 @@ describe('Phase 3 — RUN: RetryHandler actually retries', () => {
 
     const promise = handler.execute(async () => {
       calls++;
-      return { status: 'failure' as const, failure_classification: FailureClassification.INFRASTRUCTURE_FAILURE };
+      return {
+        status: 'failure' as const,
+        failure_classification: FailureClassification.INFRASTRUCTURE_FAILURE,
+      };
     });
     await jest.runAllTimersAsync();
     const { retry_result } = await promise;
@@ -471,7 +523,11 @@ describe('Phase 3 — RUN: RetryHandler actually retries', () => {
 
     const promise = handler.execute(async () => {
       calls++;
-      if (calls < 2) return { status: 'failure' as const, failure_classification: FailureClassification.INFRASTRUCTURE_FAILURE };
+      if (calls < 2)
+        return {
+          status: 'failure' as const,
+          failure_classification: FailureClassification.INFRASTRUCTURE_FAILURE,
+        };
       return { status: 'success' as const, data: 'real result' };
     });
     await jest.runAllTimersAsync();
@@ -493,7 +549,7 @@ describe('Phase 3 — RUN: DegradedModeManager real source tracking', () => {
   it('getAvailableSources excludes degraded ones — pipeline skips them', () => {
     const mgr = new DegradedModeManager();
     mgr.registerSource({ source_id: 'crunchbase', source_type: 'api' });
-    mgr.registerSource({ source_id: 'linkedin',   source_type: 'web_scraping' });
+    mgr.registerSource({ source_id: 'linkedin', source_type: 'web_scraping' });
     mgr.registerSource({ source_id: 'techcrunch', source_type: 'web_scraping' });
 
     // Simulate EXTERNAL_SOURCE_FAILURE for crunchbase
@@ -509,7 +565,7 @@ describe('Phase 3 — RUN: DegradedModeManager real source tracking', () => {
   it('status report for Dashboard has the right counts and affected list', () => {
     const mgr = new DegradedModeManager();
     mgr.registerSource({ source_id: 'crunchbase', source_type: 'api' });
-    mgr.registerSource({ source_id: 'linkedin',   source_type: 'web_scraping' });
+    mgr.registerSource({ source_id: 'linkedin', source_type: 'web_scraping' });
     mgr.markDegraded('crunchbase');
 
     const report = mgr.getStatusReport();
@@ -522,6 +578,8 @@ describe('Phase 3 — RUN: DegradedModeManager real source tracking', () => {
     expect(report.affected_sources[0].source_id).toBe('crunchbase');
     expect(report.affected_sources[0].status).toBe('degraded');
     // last_available should be a valid timestamp
-    expect(new Date(report.affected_sources[0].last_available!).toString()).not.toBe('Invalid Date');
+    expect(new Date(report.affected_sources[0].last_available!).toString()).not.toBe(
+      'Invalid Date'
+    );
   });
 });

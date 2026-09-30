@@ -222,11 +222,7 @@ export class PlanningError extends PlatformError {
 }
 
 export class PromptParsingError extends PlanningError {
-  constructor(
-    message: string,
-    context: Record<string, any> = {},
-    retryable = false
-  ) {
+  constructor(message: string, context: Record<string, any> = {}, retryable = false) {
     super(message, context, retryable);
     this.name = 'PromptParsingError';
   }

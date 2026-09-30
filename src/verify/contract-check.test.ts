@@ -25,7 +25,13 @@ import type { N8NWorkflow, N8NNode, FieldDefinition, FieldDefinitionType } from 
 const DELIVER_NODE_TYPE = 'n8n-nodes-base.Webhook';
 
 const FIELD_TYPES: FieldDefinitionType[] = [
-  'string', 'number', 'date', 'url', 'email', 'array', 'object',
+  'string',
+  'number',
+  'date',
+  'url',
+  'email',
+  'array',
+  'object',
 ];
 
 // ============================================================================
@@ -104,18 +110,15 @@ describe('Property 14: Set Difference', () => {
 
   it('certifies when the workflow produces all required fields', () => {
     fc.assert(
-      fc.property(
-        fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 8 }),
-        fieldNames => {
-          const deliverNode = makeDeliverNode(fieldNames);
-          const workflow = makeWorkflow([deliverNode]);
-          const required = fieldNames.map(arbFieldDef);
-          const result = checker.verify(makeInput(workflow, required));
+      fc.property(fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 8 }), fieldNames => {
+        const deliverNode = makeDeliverNode(fieldNames);
+        const workflow = makeWorkflow([deliverNode]);
+        const required = fieldNames.map(arbFieldDef);
+        const result = checker.verify(makeInput(workflow, required));
 
-          expect(result.status).toBe('certified');
-          expect(result.violations).toBeUndefined();
-        }
-      ),
+        expect(result.status).toBe('certified');
+        expect(result.violations).toBeUndefined();
+      }),
       { numRuns: 100 }
     );
   });
@@ -181,40 +184,31 @@ describe('Property 14: Set Difference', () => {
 
   it('certifies with empty required_fields (vacuously complete)', () => {
     fc.assert(
-      fc.property(
-        fc.uniqueArray(arbFieldName, { minLength: 0, maxLength: 5 }),
-        producedNames => {
-          const workflow = makeWorkflow([makeDeliverNode(producedNames)]);
-          const result = checker.verify(makeInput(workflow, []));
+      fc.property(fc.uniqueArray(arbFieldName, { minLength: 0, maxLength: 5 }), producedNames => {
+        const workflow = makeWorkflow([makeDeliverNode(producedNames)]);
+        const result = checker.verify(makeInput(workflow, []));
 
-          expect(result.status).toBe('certified');
-        }
-      ),
+        expect(result.status).toBe('certified');
+      }),
       { numRuns: 100 }
     );
   });
 
   it('each violation carries the expected_type from the FieldDefinition', () => {
     fc.assert(
-      fc.property(
-        arbFieldName,
-        arbFieldType,
-        (fieldName, fieldType) => {
-          // Empty Deliver node → field is definitely missing
-          const deliverNode = makeDeliverNode([]);
-          const workflow = makeWorkflow([deliverNode]);
-          const required: FieldDefinition[] = [
-            { name: fieldName, type: fieldType, required: true },
-          ];
+      fc.property(arbFieldName, arbFieldType, (fieldName, fieldType) => {
+        // Empty Deliver node → field is definitely missing
+        const deliverNode = makeDeliverNode([]);
+        const workflow = makeWorkflow([deliverNode]);
+        const required: FieldDefinition[] = [{ name: fieldName, type: fieldType, required: true }];
 
-          const result = checker.verify(makeInput(workflow, required, false));
+        const result = checker.verify(makeInput(workflow, required, false));
 
-          expect(result.status).toBe('violation');
-          const violation = result.violations!.find(v => v.missing_field === fieldName);
-          expect(violation).toBeDefined();
-          expect(violation!.expected_type).toBe(fieldType);
-        }
-      ),
+        expect(result.status).toBe('violation');
+        const violation = result.violations!.find(v => v.missing_field === fieldName);
+        expect(violation).toBeDefined();
+        expect(violation!.expected_type).toBe(fieldType);
+      }),
       { numRuns: 100 }
     );
   });
@@ -239,92 +233,78 @@ describe('Property 15: Provenance Verification', () => {
 
   it('no provenance violation when source_url is produced and provenance is required', () => {
     fc.assert(
-      fc.property(
-        fc.uniqueArray(arbFieldName, { minLength: 0, maxLength: 5 }),
-        otherFields => {
-          // Include source_url in the Deliver node's output
-          const allProduced = [...otherFields, 'source_url'];
-          const deliverNode = makeDeliverNode(allProduced);
-          const workflow = makeWorkflow([deliverNode]);
+      fc.property(fc.uniqueArray(arbFieldName, { minLength: 0, maxLength: 5 }), otherFields => {
+        // Include source_url in the Deliver node's output
+        const allProduced = [...otherFields, 'source_url'];
+        const deliverNode = makeDeliverNode(allProduced);
+        const workflow = makeWorkflow([deliverNode]);
 
-          // required_fields only asks for the other fields (no source_url in list)
-          const required = otherFields.map(arbFieldDef);
-          const result = checker.verify(makeInput(workflow, required, true));
+        // required_fields only asks for the other fields (no source_url in list)
+        const required = otherFields.map(arbFieldDef);
+        const result = checker.verify(makeInput(workflow, required, true));
 
-          const provenanceViolation = (result.violations ?? []).find(
-            v => v.missing_field === 'source_url'
-          );
-          expect(provenanceViolation).toBeUndefined();
-        }
-      ),
+        const provenanceViolation = (result.violations ?? []).find(
+          v => v.missing_field === 'source_url'
+        );
+        expect(provenanceViolation).toBeUndefined();
+      }),
       { numRuns: 100 }
     );
   });
 
   it('adds source_url violation when provenance is required but source_url is absent', () => {
     fc.assert(
-      fc.property(
-        fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 5 }),
-        fieldNames => {
-          // Deliver node does NOT produce source_url
-          const deliverNode = makeDeliverNode(fieldNames);
-          const workflow = makeWorkflow([deliverNode]);
-          const required = fieldNames.map(arbFieldDef);
+      fc.property(fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 5 }), fieldNames => {
+        // Deliver node does NOT produce source_url
+        const deliverNode = makeDeliverNode(fieldNames);
+        const workflow = makeWorkflow([deliverNode]);
+        const required = fieldNames.map(arbFieldDef);
 
-          const result = checker.verify(makeInput(workflow, required, true));
+        const result = checker.verify(makeInput(workflow, required, true));
 
-          expect(result.status).toBe('violation');
-          const provenanceViolation = result.violations!.find(
-            v => v.missing_field === 'source_url'
-          );
-          expect(provenanceViolation).toBeDefined();
-          expect(provenanceViolation!.required_by).toBe('provenance_requirement');
-          expect(provenanceViolation!.expected_type).toBe('url');
-        }
-      ),
+        expect(result.status).toBe('violation');
+        const provenanceViolation = result.violations!.find(v => v.missing_field === 'source_url');
+        expect(provenanceViolation).toBeDefined();
+        expect(provenanceViolation!.required_by).toBe('provenance_requirement');
+        expect(provenanceViolation!.expected_type).toBe('url');
+      }),
       { numRuns: 100 }
     );
   });
 
   it('no provenance violation when provenance_required is false, even without source_url', () => {
     fc.assert(
-      fc.property(
-        fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 5 }),
-        fieldNames => {
-          // Deliver node does NOT produce source_url, but provenance_required=false
-          const deliverNode = makeDeliverNode(fieldNames);
-          const workflow = makeWorkflow([deliverNode]);
-          const required = fieldNames.map(arbFieldDef);
+      fc.property(fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 5 }), fieldNames => {
+        // Deliver node does NOT produce source_url, but provenance_required=false
+        const deliverNode = makeDeliverNode(fieldNames);
+        const workflow = makeWorkflow([deliverNode]);
+        const required = fieldNames.map(arbFieldDef);
 
-          const result = checker.verify(makeInput(workflow, required, false));
+        const result = checker.verify(makeInput(workflow, required, false));
 
-          const provenanceViolation = (result.violations ?? []).find(
-            v => v.missing_field === 'source_url'
-          );
-          expect(provenanceViolation).toBeUndefined();
-        }
-      ),
+        const provenanceViolation = (result.violations ?? []).find(
+          v => v.missing_field === 'source_url'
+        );
+        expect(provenanceViolation).toBeUndefined();
+      }),
       { numRuns: 100 }
     );
   });
 
   it('certifies with provenance when source_url produced and all fields satisfied', () => {
     fc.assert(
-      fc.property(
-        fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 5 }),
-        fieldNames => {
-          const allProduced = [...fieldNames, 'source_url'];
-          const deliverNode = makeDeliverNode(allProduced);
-          const workflow = makeWorkflow([deliverNode]);
-          const required = fieldNames.map(arbFieldDef);
+      fc.property(fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 5 }), fieldNames => {
+        const allProduced = [...fieldNames, 'source_url'];
+        const deliverNode = makeDeliverNode(allProduced);
+        const workflow = makeWorkflow([deliverNode]);
+        const required = fieldNames.map(arbFieldDef);
 
-          const result = checker.verify(makeInput(workflow, required, true));
+        const result = checker.verify(makeInput(workflow, required, true));
 
-          expect(result.status).toBe('certified');
-          expect(result.certificate).toBeDefined();
-          expect(result.certificate!.provenance_verified).toBe(true);
-        }
-      ),
+        expect(result.status).toBe('certified');
+        expect(result.certificate).toBeDefined();
+        expect(result.certificate!.provenance_verified).toBe(true);
+      }),
       { numRuns: 100 }
     );
   });
@@ -348,44 +328,38 @@ describe('Property 16: Certificate Completeness', () => {
 
   it('satisfied_fields contains every required field name', () => {
     fc.assert(
-      fc.property(
-        fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 8 }),
-        fieldNames => {
-          const deliverNode = makeDeliverNode(fieldNames);
-          const workflow = makeWorkflow([deliverNode]);
-          const required = fieldNames.map(arbFieldDef);
+      fc.property(fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 8 }), fieldNames => {
+        const deliverNode = makeDeliverNode(fieldNames);
+        const workflow = makeWorkflow([deliverNode]);
+        const required = fieldNames.map(arbFieldDef);
 
-          const result = checker.verify(makeInput(workflow, required));
+        const result = checker.verify(makeInput(workflow, required));
 
-          expect(result.status).toBe('certified');
-          const cert = result.certificate!;
+        expect(result.status).toBe('certified');
+        const cert = result.certificate!;
 
-          for (const name of fieldNames) {
-            expect(cert.satisfied_fields).toContain(name);
-          }
+        for (const name of fieldNames) {
+          expect(cert.satisfied_fields).toContain(name);
         }
-      ),
+      }),
       { numRuns: 100 }
     );
   });
 
   it('no required field name is omitted from satisfied_fields', () => {
     fc.assert(
-      fc.property(
-        fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 8 }),
-        fieldNames => {
-          const deliverNode = makeDeliverNode(fieldNames);
-          const workflow = makeWorkflow([deliverNode]);
-          const required = fieldNames.map(arbFieldDef);
+      fc.property(fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 8 }), fieldNames => {
+        const deliverNode = makeDeliverNode(fieldNames);
+        const workflow = makeWorkflow([deliverNode]);
+        const required = fieldNames.map(arbFieldDef);
 
-          const result = checker.verify(makeInput(workflow, required));
+        const result = checker.verify(makeInput(workflow, required));
 
-          expect(result.status).toBe('certified');
-          // satisfied_fields length must equal required fields count
-          // (no duplicates, no omissions)
-          expect(result.certificate!.satisfied_fields.length).toBe(fieldNames.length);
-        }
-      ),
+        expect(result.status).toBe('certified');
+        // satisfied_fields length must equal required fields count
+        // (no duplicates, no omissions)
+        expect(result.certificate!.satisfied_fields.length).toBe(fieldNames.length);
+      }),
       { numRuns: 100 }
     );
   });
@@ -416,21 +390,18 @@ describe('Property 16: Certificate Completeness', () => {
 
   it('certification_timestamp is a valid ISO 8601 date string', () => {
     fc.assert(
-      fc.property(
-        fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 5 }),
-        fieldNames => {
-          const deliverNode = makeDeliverNode(fieldNames);
-          const workflow = makeWorkflow([deliverNode]);
-          const required = fieldNames.map(arbFieldDef);
+      fc.property(fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 5 }), fieldNames => {
+        const deliverNode = makeDeliverNode(fieldNames);
+        const workflow = makeWorkflow([deliverNode]);
+        const required = fieldNames.map(arbFieldDef);
 
-          const result = checker.verify(makeInput(workflow, required));
+        const result = checker.verify(makeInput(workflow, required));
 
-          expect(result.status).toBe('certified');
-          const ts = result.certificate!.certification_timestamp;
-          expect(typeof ts).toBe('string');
-          expect(isNaN(new Date(ts).getTime())).toBe(false);
-        }
-      ),
+        expect(result.status).toBe('certified');
+        const ts = result.certificate!.certification_timestamp;
+        expect(typeof ts).toBe('string');
+        expect(isNaN(new Date(ts).getTime())).toBe(false);
+      }),
       { numRuns: 100 }
     );
   });
@@ -458,20 +429,17 @@ describe('Property 16: Certificate Completeness', () => {
 
   it('certificate contains a non-empty validator_version string', () => {
     fc.assert(
-      fc.property(
-        fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 5 }),
-        fieldNames => {
-          const deliverNode = makeDeliverNode(fieldNames);
-          const workflow = makeWorkflow([deliverNode]);
-          const required = fieldNames.map(arbFieldDef);
+      fc.property(fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 5 }), fieldNames => {
+        const deliverNode = makeDeliverNode(fieldNames);
+        const workflow = makeWorkflow([deliverNode]);
+        const required = fieldNames.map(arbFieldDef);
 
-          const result = checker.verify(makeInput(workflow, required));
+        const result = checker.verify(makeInput(workflow, required));
 
-          expect(result.status).toBe('certified');
-          expect(typeof result.certificate!.validator_version).toBe('string');
-          expect(result.certificate!.validator_version.length).toBeGreaterThan(0);
-        }
-      ),
+        expect(result.status).toBe('certified');
+        expect(typeof result.certificate!.validator_version).toBe('string');
+        expect(result.certificate!.validator_version.length).toBeGreaterThan(0);
+      }),
       { numRuns: 100 }
     );
   });

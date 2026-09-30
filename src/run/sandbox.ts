@@ -223,10 +223,7 @@ export class Sandbox {
    *
    * Marked `protected` so tests can subclass and override to inject errors.
    */
-  protected processNode(
-    node: N8NNode,
-    inputData: Record<string, any>[]
-  ): Record<string, any>[] {
+  protected processNode(node: N8NNode, inputData: Record<string, any>[]): Record<string, any>[] {
     // Head nodes (no input) produce a single synthetic record from parameters
     if (inputData.length === 0) {
       return [

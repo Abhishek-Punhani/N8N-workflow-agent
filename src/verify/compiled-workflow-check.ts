@@ -28,7 +28,8 @@ const VALIDATOR_VERSION = '1.0.0';
  * How many total attempts (1 initial + N-1 retries) to make before giving up.
  * Matches the platform-wide retry config for INFRASTRUCTURE_FAILURE (max 3).
  */
-const MAX_ATTEMPTS = DEFAULT_RETRY_CONFIGS[FailureClassification.INFRASTRUCTURE_FAILURE].maxAttempts;
+const MAX_ATTEMPTS =
+  DEFAULT_RETRY_CONFIGS[FailureClassification.INFRASTRUCTURE_FAILURE].maxAttempts;
 
 // ============================================================================
 // Configuration types
@@ -202,8 +203,7 @@ export class CompiledWorkflowCheck {
       }
     } catch (networkErr) {
       // Network failure or AbortController timeout — retryable
-      const message =
-        networkErr instanceof Error ? networkErr.message : 'Unknown network error';
+      const message = networkErr instanceof Error ? networkErr.message : 'Unknown network error';
       throw new InfrastructureFailureError(
         `n8n API network error: ${message}`,
         { url, timeoutMs: this.config.timeoutMs },
@@ -283,10 +283,7 @@ export class CompiledWorkflowCheck {
   // -------------------------------------------------------------------------
 
   /** Build a CompiledWorkflowCheckResult for an API-level (non-workflow) failure. */
-  private buildApiErrorResult(
-    errorCode: string,
-    message: string
-  ): CompiledWorkflowCheckResult {
+  private buildApiErrorResult(errorCode: string, message: string): CompiledWorkflowCheckResult {
     return {
       status: 'invalid',
       errors: [
