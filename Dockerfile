@@ -28,4 +28,4 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
 EXPOSE 3000
-CMD ["node", "dist/server.js"]
+CMD ["/bin/sh", "-c", "if [ -f /shared/.env ]; then export $(cat /shared/.env | xargs); fi && node dist/server.js"]

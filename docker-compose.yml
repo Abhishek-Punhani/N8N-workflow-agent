@@ -22,9 +22,25 @@ services:
       - DB_NAME=${DB_NAME:-ai_data_db}
       - LIMIT_MAX_RECORDS=${LIMIT_MAX_RECORDS:-1000000}
       - LIMIT_MAX_EXPORT_SIZE_MB=${LIMIT_MAX_EXPORT_SIZE_MB:-500}
+    volumes:
+      - shared_env:/shared
     depends_on:
       postgres:
         condition: service_healthy
+      n8n-bootstrapper:
+        condition: service_completed_successfully
+    networks:
+      - ai-network
+
+  n8n-bootstrapper:
+    image: curlimages/curl:latest
+    container_name: ai-n8n-bootstrapper
+    user: root
+    volumes:
+      - ./scripts/bootstrap-n8n.sh:/bootstrap.sh
+      - shared_env:/shared
+    command: ["/bin/sh", "/bootstrap.sh"]
+    depends_on:
       n8n:
         condition: service_started
     networks:
@@ -55,6 +71,12 @@ services:
       - NODE_ENV=production
       - WEBHOOK_URL=http://localhost:5678/
       - GENERIC_TIMEZONE=UTC
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_DATABASE=${DB_NAME:-ai_data_db}
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_USER=${DB_USER:-ai_platform}
+      - DB_POSTGRESDB_PASSWORD=${DB_PASSWORD}
     volumes:
       - n8n_data:/home/node/.n8n
     networks:
@@ -82,6 +104,7 @@ services:
 volumes:
   n8n_data:
   postgres_data:
+  shared_env:
 
 networks:
   ai-network:
