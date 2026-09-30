@@ -6,23 +6,48 @@ import { ExecutionResults } from './components/ExecutionResults';
 import { RecordInspectionView } from './components/RecordInspectionView';
 import { ExportManager } from './components/ExportManager';
 import { DegradedModeIndicator } from './components/DegradedModeIndicator';
-import { Database, LayoutDashboard } from 'lucide-react';
+import { Database, LayoutDashboard, AlertCircle } from 'lucide-react';
 
 function App() {
   const [data, setData] = useState<DashboardView | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDashboardData().then(dashboardData => {
-      setData(dashboardData);
-      setLoading(false);
-    });
+    fetchDashboardData()
+      .then(dashboardData => {
+        setData(dashboardData);
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard data.');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-white rounded-lg shadow p-8 max-w-md w-full text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Failed to load dashboard</h2>
+          <p className="text-sm text-gray-500">{error ?? 'Unknown error. Check the platform is running.'}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -62,8 +87,10 @@ function App() {
           </div>
         </div>
 
-        <RecordInspectionView inspection={data.record_inspection} />
-        
+        {data.record_inspection && (
+          <RecordInspectionView inspection={data.record_inspection} />
+        )}
+
         <ExportManager options={data.export_options} />
       </main>
     </div>
