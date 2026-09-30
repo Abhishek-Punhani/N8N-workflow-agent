@@ -4,3 +4,7 @@
  */
 
 export * from './types.js';
+export { Sandbox, SandboxTimeoutError } from './sandbox.js';
+export { FailureClassifier } from './failure-classifier.js';
+export { RetryHandler } from './retry-handler.js';
+export { DegradedModeManager } from './degraded-mode-manager.js';

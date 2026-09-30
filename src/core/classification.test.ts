@@ -128,7 +128,7 @@ describe('FailureClassifier', () => {
         retryCount: 0,
       };
 
-      const classification = classifier.classify(context);
+      classifier.classify(context);
     });
 
     test('should classify logic failure by default', () => {

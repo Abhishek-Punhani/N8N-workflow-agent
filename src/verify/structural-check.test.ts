@@ -359,10 +359,12 @@ describe('Property 7: Field Reference Validation', () => {
     fc.assert(
       fc.property(
         arbId,
-        arbId.filter(id => id !== 'a'),
+        arbId,
         // A field name that is definitely not 'contents'
         fc.string({ minLength: 1, maxLength: 15 }).filter(f => f !== 'contents'),
         (id1, id2, badField) => {
+          // Ensure the two step IDs are distinct so the connection is between different steps
+          fc.pre(id1 !== id2);
           const ir: IR = {
             steps: [
               {

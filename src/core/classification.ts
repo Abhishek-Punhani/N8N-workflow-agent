@@ -239,7 +239,8 @@ export class FailureClassifier {
     }
 
     if (metadata.backoffStrategy === 'exponential') {
-      return baseDelay * Math.pow(2, attemptNumber - 1);
+      const delay = baseDelay * Math.pow(2, attemptNumber - 1);
+      return Math.min(delay, 30000);
     }
 
     return 0;

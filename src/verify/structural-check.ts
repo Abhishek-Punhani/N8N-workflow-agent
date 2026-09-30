@@ -16,7 +16,6 @@ import type {
   StructuralError,
   StructuralErrorType,
   VerifiedIR,
-  CapabilityType,
   ParameterType,
 } from '../core/types.js';
 import { CAPABILITY_VOCABULARY } from '../core/types.js';
@@ -101,7 +100,7 @@ export class StructuralCheck {
           this.makeError(
             step.id,
             'INVALID_STEP_TYPE',
-            `Step type '${step.type}' is not in the Capability Vocabulary. ` +
+            `Step type '${String(step.type)}' is not in the Capability Vocabulary. ` +
               `Valid types: ${Object.keys(CAPABILITY_VOCABULARY).join(', ')}.`,
             { step: step.id }
           )
@@ -130,7 +129,7 @@ export class StructuralCheck {
       // Skip steps with an invalid type — already reported in checkStepTypes
       if (!isValidCapabilityType(step.type)) continue;
 
-      const capabilityDef = CAPABILITY_VOCABULARY[step.type as CapabilityType];
+      const capabilityDef = CAPABILITY_VOCABULARY[step.type];
       const requiredParams = capabilityDef.requiredParameters;
 
       for (const [paramName, expectedType] of Object.entries(requiredParams)) {
@@ -148,7 +147,8 @@ export class StructuralCheck {
         }
 
         // (b) Type check
-        const actualValue = step.parameters[paramName];
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const actualValue: unknown = step.parameters[paramName];
         if (!this.isCompatibleType(actualValue, expectedType)) {
           errors.push(
             this.makeError(
@@ -238,7 +238,7 @@ export class StructuralCheck {
       // Validate from_output against upstream output_schema
       const outputProps = fromStep.output_schema?.properties;
       if (outputProps && Object.keys(outputProps).length > 0) {
-        if (!(conn.from_output in outputProps)) {
+        if (!Object.prototype.hasOwnProperty.call(outputProps, conn.from_output)) {
           errors.push(
             this.makeError(
               conn.from_step,
@@ -254,7 +254,7 @@ export class StructuralCheck {
       // Validate to_input against downstream input_schema
       const inputProps = toStep.input_schema?.properties;
       if (inputProps && Object.keys(inputProps).length > 0) {
-        if (!(conn.to_input in inputProps)) {
+        if (!Object.prototype.hasOwnProperty.call(inputProps, conn.to_input)) {
           errors.push(
             this.makeError(
               conn.to_step,

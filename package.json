@@ -88,5 +88,9 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@google/generative-ai": "0.24.1",
+    "dotenv": "18.0.4"
   }
 }

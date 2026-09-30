@@ -117,7 +117,7 @@ This implementation follows a three-phase architecture (Plan, Verify, Run) that 
   - Capture detailed failure traces with step_id, error_message, stack_trace
   - _Requirements: 7.3, 7.4, 7.5, 7.6, 13.1_
 
-- [ ]* 3.3 Write integration tests for Sandbox
+- [x]* 3.3 Write integration tests for Sandbox
   - Test successful execution with sample output
   - Test LOGIC_FAILURE classification and trace capture
   - Test INFRASTRUCTURE_FAILURE retry logic (exponential backoff, max 3 attempts)
@@ -125,7 +125,7 @@ This implementation follows a three-phase architecture (Plan, Verify, Run) that 
   - Test timeout enforcement
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
 
-- [ ] 3.4 Implement retry and degraded mode handlers
+- [x] 3.4 Implement retry and degraded mode handlers
   - Create RetryHandler with exponential backoff (up to 3 retries for INFRASTRUCTURE_FAILURE)
   - Implement DegradedModeManager to track unavailable sources
   - Add source availability tracking and status reporting
@@ -133,7 +133,7 @@ This implementation follows a three-phase architecture (Plan, Verify, Run) that 
 
 ### 4. Phase 1: LLM Components (PLAN Phase)
 
-- [ ] 4.1 Implement Intake Agent (LLM-based)
+- [x] 4.1 Implement Intake Agent (LLM-based)
   - Create IntakeAgent class with parse() method accepting user prompt
   - Implement LLM client with schema-constrained output (JSON mode)
   - Define prompt template extracting target_entity, constraints, required_fields, data_sources
@@ -142,7 +142,7 @@ This implementation follows a three-phase architecture (Plan, Verify, Run) that 
   - Add 30-second timeout enforcement
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-- [ ]* 4.2 Write property tests for Intake Agent (Property 1)
+- [x]* 4.2 Write property tests for Intake Agent (Property 1)
   - **Property 1: Output Schema Compliance** - Verify StructuredObjective conforms to JSON schema
   - **Validates: Requirements 1.2**
 

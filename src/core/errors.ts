@@ -21,7 +21,7 @@ export enum FailureClassification {
 }
 
 /**
- * Detailed reasons for EXTERNAL_SOURCE_FAILURE
+ * Detailed reasons fo/r EXTERNAL_SOURCE_FAILURE
  *
  * Enables fine-grained handling strategies:
  * - RATE_LIMITED: HTTP 429, wait + retry with backoff (read Retry-After header)
@@ -224,7 +224,7 @@ export class PlanningError extends PlatformError {
 export class PromptParsingError extends PlanningError {
   constructor(
     message: string,
-    context: { prompt?: string; parsed_length?: number } = {},
+    context: Record<string, any> = {},
     retryable = false
   ) {
     super(message, context, retryable);
@@ -236,7 +236,7 @@ export class PromptTooLongError extends PromptParsingError {
   constructor(promptLength: number, maxLength: number = 10000) {
     super(
       `Prompt exceeds maximum length of ${maxLength} characters`,
-      { parsed_length: promptLength },
+      { prompt_length: promptLength, max_length: maxLength },
       false
     );
     this.name = 'PromptTooLongError';
@@ -245,14 +245,14 @@ export class PromptTooLongError extends PromptParsingError {
 
 export class PromptEmptyError extends PromptParsingError {
   constructor() {
-    super('Prompt cannot be empty', { parsed_length: 0 }, false);
+    super('Prompt cannot be empty', { prompt_length: 0 }, false);
     this.name = 'PromptEmptyError';
   }
 }
 
 export class AmbiguousPromptError extends PromptParsingError {
-  constructor(_ambiguities: string[]) {
-    super('Prompt contains ambiguous elements requiring clarification', {}, false);
+  constructor(ambiguities: string[]) {
+    super('Prompt contains ambiguous elements requiring clarification', { ambiguities }, false);
     this.name = 'AmbiguousPromptError';
   }
 }
@@ -261,7 +261,7 @@ export class CapabilityNotInVocabularyError extends PlanningError {
   constructor(capability: string, availableCapabilities: string[]) {
     super(
       `Capability '${capability}' is not in the vocabulary`,
-      { capability_name: capability, available: availableCapabilities },
+      { capability, availableCapabilities },
       false
     );
     this.name = 'CapabilityNotInVocabularyError';
@@ -308,7 +308,7 @@ export class MissingParameterError extends StructuralValidationError {
   constructor(stepId: string, parameterName: string, requiredBy: string) {
     super(
       `Step '${stepId}' is missing required parameter '${parameterName}'`,
-      { step_id: stepId, parameter_name: parameterName, required_by: requiredBy },
+      { step_id: stepId, parameter: parameterName, required_by: requiredBy },
       false
     );
     this.name = 'MissingParameterError';
@@ -360,7 +360,7 @@ export class ContractViolationError extends ValidationError {
 
 export class MissingFieldError extends ContractViolationError {
   constructor(field: string, requiredBy: string) {
-    super(`Required field '${field}' is missing`, { field_name: field, required_by: requiredBy });
+    super(`Required field '${field}' is missing`, { field, required_by: requiredBy });
     this.name = 'MissingFieldError';
   }
 }
@@ -501,7 +501,7 @@ export function formatErrorForResponse(error: PlatformError | Error): Record<str
 
   // Remove sensitive context data if present
   const safeContext = { ...formatted.context };
-  const sensitiveKeys = ['password', 'secret', 'token', 'credential', 'key'];
+  const sensitiveKeys = ['password', 'secret', 'token', 'credential'];
 
   for (const key of sensitiveKeys) {
     if (key in safeContext) {
