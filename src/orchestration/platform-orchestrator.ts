@@ -1,5 +1,10 @@
 import { IntakeAgent, WorkflowPlanner, RepairAgent, MAX_REPAIR_ATTEMPTS } from '../plan/index.js';
-import { StructuralCheck, Compiler, CompiledWorkflowCheck, ContractCheck } from '../verify/index.js';
+import {
+  StructuralCheck,
+  Compiler,
+  CompiledWorkflowCheck,
+  ContractCheck,
+} from '../verify/index.js';
 import { Sandbox, Deployer } from '../run/index.js';
 import type { N8NWorkflow } from '../core/types.js';
 import { InMemoryRepository } from './repository.js';
@@ -28,7 +33,7 @@ export class PlatformOrchestrator {
 
   async run(prompt: string): Promise<{ workflowId: string }> {
     this.logInfo('Starting Orchestration Phase');
-    
+
     // Track State
     const promptId = randomUUID();
     this.repo.savePrompt({ id: promptId, promptText: prompt, createdAt: new Date() });
@@ -65,23 +70,27 @@ export class PlatformOrchestrator {
 
         // Compiler
         this.logInfo(`Verification Attempt ${attempts + 1}: Compiler`);
-        const compilerResult = this.config.compiler.compile({ verified_ir: structuralResult.verified_ir });
+        const compilerResult = this.config.compiler.compile({
+          verified_ir: structuralResult.verified_ir,
+        });
         if (compilerResult.status === 'error' || !compilerResult.workflow_json) {
-            throw new Error('Compiler Failed: ' + JSON.stringify(compilerResult.errors));
+          throw new Error('Compiler Failed: ' + JSON.stringify(compilerResult.errors));
         }
         finalWorkflow = compilerResult.workflow_json;
 
         // Compiled Check
         this.logInfo(`Verification Attempt ${attempts + 1}: Compiled Workflow Check`);
-        const compiledResult = await this.config.compiledWorkflowCheck.validate({ workflow_json: finalWorkflow });
+        const compiledResult = await this.config.compiledWorkflowCheck.validate({
+          workflow_json: finalWorkflow,
+        });
         if (compiledResult.status === 'invalid') {
           throw new Error('Compiled Check Failed: ' + JSON.stringify(compiledResult.errors));
         }
 
         // Contract Check
         this.logInfo(`Verification Attempt ${attempts + 1}: Contract Check`);
-        const contractResult = this.config.contractCheck.verify({ 
-          workflow_json: finalWorkflow, 
+        const contractResult = this.config.contractCheck.verify({
+          workflow_json: finalWorkflow,
           required_fields: objective.required_fields,
           provenance_required: objective.output_requirements?.format ? true : false, // Simplified check
         });
@@ -100,46 +109,61 @@ export class PlatformOrchestrator {
         attempts++;
         if (attempts > MAX_REPAIR_ATTEMPTS) {
           this.logError('Max repair attempts reached. Aborting.', error);
-          const errorMsg = error instanceof Error ? error.message : typeof error === 'string' ? error : 'Unknown error';
+          const errorMsg =
+            error instanceof Error
+              ? error.message
+              : typeof error === 'string'
+                ? error
+                : 'Unknown error';
           throw new Error(
             `Orchestration failed after ${MAX_REPAIR_ATTEMPTS} repair attempts. Last error: ${errorMsg}`
           );
         }
 
         this.logInfo(`Invoking Repair Agent (Attempt ${attempts} of ${MAX_REPAIR_ATTEMPTS})`);
-        
+
         // Mock a failure trace for Sandbox or Verify errors
         const failureTrace = {
           step_id: ir.steps[0]?.id || 'unknown',
-          error_message: error instanceof Error ? error.message : typeof error === 'string' ? error : 'Unknown error',
+          error_message:
+            error instanceof Error
+              ? error.message
+              : typeof error === 'string'
+                ? error
+                : 'Unknown error',
           context: {},
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           classification: 'validation_error' as any, // Mocking classification
           retry_count: attempts,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         };
-        
+
         const repairInput = {
           failure_trace: failureTrace,
           original_ir: ir,
           attempt_number: attempts,
-          previous_patches: previousPatches
+          previous_patches: previousPatches,
         };
         const repairOutput = await this.config.repair.repair(repairInput);
-        
+
         if (repairOutput.status === 'escalated') {
-          throw new Error('Repair Agent escalated the issue: ' + (repairOutput.escalation_report ? JSON.stringify(repairOutput.escalation_report) : 'Unknown reason'));
+          throw new Error(
+            'Repair Agent escalated the issue: ' +
+              (repairOutput.escalation_report
+                ? JSON.stringify(repairOutput.escalation_report)
+                : 'Unknown reason')
+          );
         }
         if (!repairOutput.patched_ir) {
           throw new Error('Repair Agent failed to provide patched IR');
         }
-        
+
         previousPatches.push({
-           attempt: attempts,
-           patch_description: repairOutput.patch_description || 'unknown',
-           timestamp: new Date().toISOString()
+          attempt: attempts,
+          patch_description: repairOutput.patch_description || 'unknown',
+          timestamp: new Date().toISOString(),
         });
-        
+
         ir = repairOutput.patched_ir;
       }
     }
@@ -152,7 +176,7 @@ export class PlatformOrchestrator {
     this.logInfo('Deploying Workflow');
     const deployResult = await this.config.deployer.deploy({
       workflow_json: finalWorkflow,
-      credential_requirements: []
+      credential_requirements: [],
     });
 
     if (deployResult.status === 'error' || !deployResult.record) {

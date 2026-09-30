@@ -330,7 +330,7 @@ This implementation follows a three-phase architecture (Plan, Verify, Run) that 
 
 ### 10. End-to-End Integration and Orchestration
 
-- [ ] 10.1 Implement main orchestration pipeline
+- [x] 10.1 Implement main orchestration pipeline
   - Create PlatformOrchestrator class coordinating all phases (Plan → Verify → Run)
   - Wire Intake Agent → Workflow Planner → Structural Check → Compiler → Compiled Workflow Check → Contract Check → Sandbox → Deployer
   - Add Repair Agent integration on LOGIC_FAILURE (max 3 attempts)
@@ -338,14 +338,14 @@ This implementation follows a three-phase architecture (Plan, Verify, Run) that 
   - Add logging and telemetry for all phase transitions
   - _Requirements: 1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1_
 
-- [ ] 10.2 Implement state management and persistence
+- [x] 10.2 Implement state management and persistence
   - Create database schema for UserPrompt, StructuredObjective, IR, DeployedWorkflow, Execution, Record, Provenance entities
   - Implement repository layer for all entities
   - Add transaction management for multi-step operations
   - Implement state recovery for interrupted workflows
   - _Requirements: 9.5, 10.4, 11.1, 12.2, 12.4_
 
-- [ ]* 10.3 Write end-to-end integration tests
+- [x]* 10.3 Write end-to-end integration tests
   - Test complete flow: prompt → IR → workflow → deployment → execution
   - Test repair loop with LOGIC_FAILURE scenarios
   - Test retry logic with INFRASTRUCTURE_FAILURE scenarios

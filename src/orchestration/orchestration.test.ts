@@ -1,7 +1,12 @@
 import { PlatformOrchestrator } from './platform-orchestrator.js';
 import { InMemoryRepository } from './repository.js';
 import { IntakeAgent, WorkflowPlanner, RepairAgent } from '../plan/index.js';
-import { StructuralCheck, Compiler, CompiledWorkflowCheck, ContractCheck } from '../verify/index.js';
+import {
+  StructuralCheck,
+  Compiler,
+  CompiledWorkflowCheck,
+  ContractCheck,
+} from '../verify/index.js';
 import { Sandbox, Deployer } from '../run/index.js';
 
 describe('End-to-End Orchestration Integration Tests', () => {
@@ -21,7 +26,7 @@ describe('End-to-End Orchestration Integration Tests', () => {
 
   beforeEach(() => {
     repo = new InMemoryRepository();
-    
+
     intake = { parse: jest.fn() } as any;
     planner = { plan: jest.fn() } as any;
     repair = { repair: jest.fn() } as any;
@@ -43,7 +48,7 @@ describe('End-to-End Orchestration Integration Tests', () => {
       sandbox,
       deployer,
       repository: repo,
-      logger: { info: jest.fn(), error: jest.fn() }
+      logger: { info: jest.fn(), error: jest.fn() },
     });
   });
 
@@ -52,7 +57,7 @@ describe('End-to-End Orchestration Integration Tests', () => {
     intake.parse.mockResolvedValue({
       structured_objective: { target_entity: 'Data', requirements: [] },
       interpretation_confidence: 0.9,
-      assumptions: []
+      assumptions: [],
     } as any);
 
     // 2. Planner
@@ -60,26 +65,40 @@ describe('End-to-End Orchestration Integration Tests', () => {
     planner.plan.mockResolvedValue({ capability_graph: mockIr } as any);
 
     // 3. Verify loop
-    structuralCheck.validate.mockReturnValue({ status: 'valid', verified_ir: { ir: mockIr } as any });
-    
+    structuralCheck.validate.mockReturnValue({
+      status: 'valid',
+      verified_ir: { ir: mockIr } as any,
+    });
+
     const mockWorkflow = { nodes: [], connections: {} };
     compiler.compile.mockReturnValue({ status: 'success', workflow_json: mockWorkflow } as any);
-    
-    compiledWorkflowCheck.validate.mockResolvedValue({ status: 'valid', validated_workflow: mockWorkflow as any });
-    
-    contractCheck.verify.mockReturnValue({ status: 'certified', certificate: {} as any, checked_at: new Date().toISOString() });
-    
+
+    compiledWorkflowCheck.validate.mockResolvedValue({
+      status: 'valid',
+      validated_workflow: mockWorkflow as any,
+    });
+
+    contractCheck.verify.mockReturnValue({
+      status: 'certified',
+      certificate: {} as any,
+      checked_at: new Date().toISOString(),
+    });
+
     sandbox.execute.mockResolvedValue({ status: 'success', executed_at: new Date().toISOString() });
 
     // 4. Deployer
     deployer.deploy.mockResolvedValue({
       status: 'deployed',
-      record: { workflow_id: 'deploy-1', deployed_at: new Date().toISOString(), execution_url: '' } as any,
-      deployed_at: new Date().toISOString()
+      record: {
+        workflow_id: 'deploy-1',
+        deployed_at: new Date().toISOString(),
+        execution_url: '',
+      } as any,
+      deployed_at: new Date().toISOString(),
     });
 
     const result = await orchestrator.run('Sync customer data');
-    
+
     expect(result.workflowId).toBe('deploy-1');
     expect(intake.parse).toHaveBeenCalledWith('Sync customer data');
     expect(deployer.deploy).toHaveBeenCalled();
@@ -93,32 +112,39 @@ describe('End-to-End Orchestration Integration Tests', () => {
   it('Property 10.3.2: Repair loop kicks in on LOGIC_FAILURE (structural check fail)', async () => {
     intake.parse.mockResolvedValue({ structured_objective: {} } as any);
     planner.plan.mockResolvedValue({ capability_graph: { steps: [] } } as any);
-    
+
     // Fail first time
     structuralCheck.validate.mockReturnValueOnce({ status: 'invalid', errors: [] });
     // Succeed second time
-    structuralCheck.validate.mockReturnValueOnce({ status: 'valid', verified_ir: { ir: {} } as any });
-    
+    structuralCheck.validate.mockReturnValueOnce({
+      status: 'valid',
+      verified_ir: { ir: {} } as any,
+    });
+
     compiler.compile.mockReturnValue({ status: 'success', workflow_json: {} } as any);
     compiledWorkflowCheck.validate.mockResolvedValue({ status: 'valid' });
-    contractCheck.verify.mockReturnValue({ status: 'certified', certificate: {} as any, checked_at: new Date().toISOString() });
+    contractCheck.verify.mockReturnValue({
+      status: 'certified',
+      certificate: {} as any,
+      checked_at: new Date().toISOString(),
+    });
     sandbox.execute.mockResolvedValue({ status: 'success', executed_at: new Date().toISOString() });
-    
+
     deployer.deploy.mockResolvedValue({
       status: 'deployed',
       record: { workflow_id: 'deploy-2', deployed_at: '', execution_url: '' } as any,
-      deployed_at: ''
+      deployed_at: '',
     });
 
     // Mock repair agent to patch it
     repair.repair.mockResolvedValue({
       status: 'patched',
       patched_ir: { steps: [{ id: 'patched' }] } as any,
-      patch_description: 'Fixed structural issue'
+      patch_description: 'Fixed structural issue',
     });
 
     const result = await orchestrator.run('test repair');
-    
+
     expect(result.workflowId).toBe('deploy-2');
     expect(repair.repair).toHaveBeenCalledTimes(1);
     expect(structuralCheck.validate).toHaveBeenCalledTimes(2);
@@ -127,17 +153,17 @@ describe('End-to-End Orchestration Integration Tests', () => {
   it('Property 10.3.3: Exceeds MAX_REPAIR_ATTEMPTS', async () => {
     intake.parse.mockResolvedValue({ structured_objective: {} } as any);
     planner.plan.mockResolvedValue({ capability_graph: { steps: [] } } as any);
-    
+
     structuralCheck.validate.mockReturnValue({ status: 'invalid', errors: [] });
-    
+
     repair.repair.mockResolvedValue({
       status: 'patched',
       patched_ir: { steps: [{ id: 'patched' }] } as any,
-      patch_description: 'Fixed structural issue'
+      patch_description: 'Fixed structural issue',
     });
 
     await expect(orchestrator.run('test fail')).rejects.toThrow(/Orchestration failed after/);
-    
+
     expect(repair.repair).toHaveBeenCalledTimes(3); // Up to MAX_REPAIR_ATTEMPTS (which is 3)
   });
 
@@ -148,23 +174,27 @@ describe('End-to-End Orchestration Integration Tests', () => {
     structuralCheck.validate.mockReturnValue({ status: 'valid', verified_ir: { ir: {} } as any });
     compiler.compile.mockReturnValue({ status: 'success', workflow_json: {} } as any);
     compiledWorkflowCheck.validate.mockResolvedValue({ status: 'valid' });
-    contractCheck.verify.mockReturnValue({ status: 'certified', certificate: {} as any, checked_at: new Date().toISOString() });
+    contractCheck.verify.mockReturnValue({
+      status: 'certified',
+      certificate: {} as any,
+      checked_at: new Date().toISOString(),
+    });
     sandbox.execute.mockResolvedValue({ status: 'success', executed_at: new Date().toISOString() });
     deployer.deploy.mockResolvedValue({
       status: 'deployed',
       record: { workflow_id: 'deploy-concurrent', deployed_at: '', execution_url: '' } as any,
-      deployed_at: ''
+      deployed_at: '',
     });
 
     const promises = [
       orchestrator.run('task 1'),
       orchestrator.run('task 2'),
-      orchestrator.run('task 3')
+      orchestrator.run('task 3'),
     ];
 
     const results = await Promise.all(promises);
     expect(results.length).toBe(3);
-    
+
     const savedWorkflows = Array.from((repo as any).state.workflows.values());
     expect(savedWorkflows.length).toBe(3);
   });
