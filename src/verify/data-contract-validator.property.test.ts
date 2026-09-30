@@ -60,7 +60,9 @@ function makeMappings(fromStep: string, fields: string[]): FieldMapping[] {
 // Arbitraries
 // ============================================================================
 
-const arbFieldName = fc.string({ minLength: 1, maxLength: 15 }).filter(s => /^[a-z_][a-z0-9_]*$/.test(s) && s !== '__proto__');
+const arbFieldName = fc
+  .string({ minLength: 1, maxLength: 15 })
+  .filter(s => /^[a-z_][a-z0-9_]*$/.test(s) && s !== '__proto__');
 const arbFieldSet = fc.uniqueArray(arbFieldName, { minLength: 1, maxLength: 5 });
 
 // ============================================================================
@@ -100,44 +102,42 @@ describe('Property 24: Schema Compatibility — upstream superset of downstream 
           expect(result.valid).toBe(true);
           expect(result.errors.filter(e => e.error_type === 'MISSING_FIELD')).toHaveLength(0);
           expect(result.errors.filter(e => e.error_type === 'TYPE_MISMATCH')).toHaveLength(0);
-        },
+        }
       ),
-      { numRuns: 100 },
+      { numRuns: 100 }
     );
   });
 
   it('validate() returns MISSING_FIELD errors when required downstream fields absent from upstream', () => {
     fc.assert(
-      fc.property(
-        arbFieldSet,
-        arbFieldSet,
-        (upstreamFields, missingFields) => {
-          // Ensure the missing fields don't overlap with upstream
-          const trulyMissing = missingFields.filter(f => !upstreamFields.includes(f));
-          fc.pre(trulyMissing.length > 0);
+      fc.property(arbFieldSet, arbFieldSet, (upstreamFields, missingFields) => {
+        // Ensure the missing fields don't overlap with upstream
+        const trulyMissing = missingFields.filter(f => !upstreamFields.includes(f));
+        fc.pre(trulyMissing.length > 0);
 
-          const upstream = makeStep('step-a', [], upstreamFields);
-          const downstream = makeStep('step-b', trulyMissing, []);
+        const upstream = makeStep('step-a', [], upstreamFields);
+        const downstream = makeStep('step-b', trulyMissing, []);
 
-          const ir: IR = {
-            steps: [upstream, downstream],
-            connections: [{
+        const ir: IR = {
+          steps: [upstream, downstream],
+          connections: [
+            {
               from_step: 'step-a',
               from_output: 'output',
               to_step: 'step-b',
               to_input: 'input',
-            }],
-            field_mappings: [],
-            metadata: METADATA,
-          };
+            },
+          ],
+          field_mappings: [],
+          metadata: METADATA,
+        };
 
-          const result = validator.validate(ir);
-          expect(result.valid).toBe(false);
-          const missingFieldErrors = result.errors.filter(e => e.error_type === 'MISSING_FIELD');
-          expect(missingFieldErrors.length).toBeGreaterThanOrEqual(trulyMissing.length);
-        },
-      ),
-      { numRuns: 100 },
+        const result = validator.validate(ir);
+        expect(result.valid).toBe(false);
+        const missingFieldErrors = result.errors.filter(e => e.error_type === 'MISSING_FIELD');
+        expect(missingFieldErrors.length).toBeGreaterThanOrEqual(trulyMissing.length);
+      }),
+      { numRuns: 100 }
     );
   });
 });
@@ -149,62 +149,56 @@ describe('Property 24: Schema Compatibility — upstream superset of downstream 
 describe('Property 25: Contract Error Field Specification — every error has non-empty field + message', () => {
   it('all errors from validate() have non-empty field and message strings', () => {
     fc.assert(
-      fc.property(
-        arbFieldSet,
-        arbFieldSet,
-        (upstreamFields, requiredDownstreamFields) => {
-          const upstream = makeStep('step-a', [], upstreamFields);
-          const downstream = makeStep('step-b', requiredDownstreamFields, []);
+      fc.property(arbFieldSet, arbFieldSet, (upstreamFields, requiredDownstreamFields) => {
+        const upstream = makeStep('step-a', [], upstreamFields);
+        const downstream = makeStep('step-b', requiredDownstreamFields, []);
 
-          const ir: IR = {
-            steps: [upstream, downstream],
-            connections: [{
+        const ir: IR = {
+          steps: [upstream, downstream],
+          connections: [
+            {
               from_step: 'step-a',
               from_output: 'output',
               to_step: 'step-b',
               to_input: 'input',
-            }],
-            field_mappings: [],
-            metadata: METADATA,
-          };
+            },
+          ],
+          field_mappings: [],
+          metadata: METADATA,
+        };
 
-          const result = validator.validate(ir);
+        const result = validator.validate(ir);
 
-          for (const error of result.errors) {
-            expect(typeof error.field).toBe('string');
-            expect(error.field.length).toBeGreaterThan(0);
+        for (const error of result.errors) {
+          expect(typeof error.field).toBe('string');
+          expect(error.field.length).toBeGreaterThan(0);
 
-            expect(typeof error.message).toBe('string');
-            expect(error.message.length).toBeGreaterThan(0);
+          expect(typeof error.message).toBe('string');
+          expect(error.message.length).toBeGreaterThan(0);
 
-            // from_step and to_step must also be non-empty
-            expect(error.from_step.length).toBeGreaterThan(0);
-            expect(error.to_step.length).toBeGreaterThan(0);
-          }
-        },
-      ),
-      { numRuns: 100 },
+          // from_step and to_step must also be non-empty
+          expect(error.from_step.length).toBeGreaterThan(0);
+          expect(error.to_step.length).toBeGreaterThan(0);
+        }
+      }),
+      { numRuns: 100 }
     );
   });
 
   it('validateConnection() direct call — all errors have non-empty field and message', () => {
     fc.assert(
-      fc.property(
-        arbFieldSet,
-        arbFieldSet,
-        (upstreamFields, requiredFields) => {
-          const upstream = schemaWith(upstreamFields);
-          const downstream = schemaWith(requiredFields);
+      fc.property(arbFieldSet, arbFieldSet, (upstreamFields, requiredFields) => {
+        const upstream = schemaWith(upstreamFields);
+        const downstream = schemaWith(requiredFields);
 
-          const errors = validator.validateConnection(upstream, downstream, []);
+        const errors = validator.validateConnection(upstream, downstream, []);
 
-          for (const error of errors) {
-            expect(error.field.length).toBeGreaterThan(0);
-            expect(error.message.length).toBeGreaterThan(0);
-          }
-        },
-      ),
-      { numRuns: 100 },
+        for (const error of errors) {
+          expect(error.field.length).toBeGreaterThan(0);
+          expect(error.message.length).toBeGreaterThan(0);
+        }
+      }),
+      { numRuns: 100 }
     );
   });
 });
@@ -216,65 +210,63 @@ describe('Property 25: Contract Error Field Specification — every error has no
 describe('Property 26: IR Field Mapping Completeness — full coverage eliminates UNMAPPED_FIELD', () => {
   it('no UNMAPPED_FIELD errors when explicit mappings cover all required downstream fields', () => {
     fc.assert(
-      fc.property(
-        arbFieldSet,
-        (requiredFields) => {
-          const upstream = makeStep('step-a', [], requiredFields);
-          const downstream = makeStep('step-b', requiredFields, []);
+      fc.property(arbFieldSet, requiredFields => {
+        const upstream = makeStep('step-a', [], requiredFields);
+        const downstream = makeStep('step-b', requiredFields, []);
 
-          // Provide complete coverage
-          const mappings = makeMappings('step-a', requiredFields);
+        // Provide complete coverage
+        const mappings = makeMappings('step-a', requiredFields);
 
-          const ir: IR = {
-            steps: [upstream, downstream],
-            connections: [{
+        const ir: IR = {
+          steps: [upstream, downstream],
+          connections: [
+            {
               from_step: 'step-a',
               from_output: 'output',
               to_step: 'step-b',
               to_input: 'input',
-            }],
-            field_mappings: mappings,
-            metadata: METADATA,
-          };
+            },
+          ],
+          field_mappings: mappings,
+          metadata: METADATA,
+        };
 
-          const result = validator.validate(ir);
-          const unmappedErrors = result.errors.filter(e => e.error_type === 'UNMAPPED_FIELD');
-          expect(unmappedErrors).toHaveLength(0);
-        },
-      ),
-      { numRuns: 100 },
+        const result = validator.validate(ir);
+        const unmappedErrors = result.errors.filter(e => e.error_type === 'UNMAPPED_FIELD');
+        expect(unmappedErrors).toHaveLength(0);
+      }),
+      { numRuns: 100 }
     );
   });
 
   it('UNMAPPED_FIELD errors appear for fields without an explicit mapping', () => {
     fc.assert(
-      fc.property(
-        arbFieldSet,
-        (requiredFields) => {
-          fc.pre(requiredFields.length > 0);
+      fc.property(arbFieldSet, requiredFields => {
+        fc.pre(requiredFields.length > 0);
 
-          const upstream = makeStep('step-a', [], requiredFields);
-          const downstream = makeStep('step-b', requiredFields, []);
+        const upstream = makeStep('step-a', [], requiredFields);
+        const downstream = makeStep('step-b', requiredFields, []);
 
-          // Provide NO mappings
-          const ir: IR = {
-            steps: [upstream, downstream],
-            connections: [{
+        // Provide NO mappings
+        const ir: IR = {
+          steps: [upstream, downstream],
+          connections: [
+            {
               from_step: 'step-a',
               from_output: 'output',
               to_step: 'step-b',
               to_input: 'input',
-            }],
-            field_mappings: [],
-            metadata: METADATA,
-          };
+            },
+          ],
+          field_mappings: [],
+          metadata: METADATA,
+        };
 
-          const result = validator.validate(ir);
-          const unmappedErrors = result.errors.filter(e => e.error_type === 'UNMAPPED_FIELD');
-          expect(unmappedErrors.length).toBeGreaterThanOrEqual(requiredFields.length);
-        },
-      ),
-      { numRuns: 100 },
+        const result = validator.validate(ir);
+        const unmappedErrors = result.errors.filter(e => e.error_type === 'UNMAPPED_FIELD');
+        expect(unmappedErrors.length).toBeGreaterThanOrEqual(requiredFields.length);
+      }),
+      { numRuns: 100 }
     );
   });
 });

@@ -88,7 +88,7 @@ export class DataContractValidator {
 
       // Collect field_mappings for this specific connection
       const relevantMappings = ir.field_mappings.filter(
-        m => m.source_step === connection.from_step,
+        m => m.source_step === connection.from_step
       );
 
       const connectionErrors = this.validateConnection(
@@ -96,7 +96,7 @@ export class DataContractValidator {
         downstreamSchema,
         relevantMappings,
         connection.from_step,
-        connection.to_step,
+        connection.to_step
       );
 
       errors.push(...connectionErrors);
@@ -119,7 +119,7 @@ export class DataContractValidator {
     downstreamSchema: JSONSchema,
     fieldMappings: FieldMapping[],
     fromStep = 'upstream',
-    toStep = 'downstream',
+    toStep = 'downstream'
   ): ContractError[] {
     const errors: ContractError[] = [];
 
@@ -131,8 +131,12 @@ export class DataContractValidator {
     const mappedTargetFields = new Set(fieldMappings.map(m => m.target_field));
 
     for (const fieldName of requiredFields) {
-      const downstreamField = Object.prototype.hasOwnProperty.call(downstreamProps, fieldName) ? downstreamProps[fieldName] : undefined;
-      const upstreamField = Object.prototype.hasOwnProperty.call(upstreamProps, fieldName) ? upstreamProps[fieldName] : undefined;
+      const downstreamField = Object.prototype.hasOwnProperty.call(downstreamProps, fieldName)
+        ? downstreamProps[fieldName]
+        : undefined;
+      const upstreamField = Object.prototype.hasOwnProperty.call(upstreamProps, fieldName)
+        ? upstreamProps[fieldName]
+        : undefined;
 
       if (!upstreamField) {
         // Requirement 14.2: required field not produced by upstream
@@ -152,7 +156,7 @@ export class DataContractValidator {
         upstreamField,
         downstreamField,
         fromStep,
-        toStep,
+        toStep
       );
       if (typeError) {
         errors.push(typeError);
@@ -196,7 +200,7 @@ export class DataContractValidator {
     upstreamField: JSONSchema | undefined,
     downstreamField: JSONSchema | undefined,
     fromStep: string,
-    toStep: string,
+    toStep: string
   ): ContractError | null {
     if (!upstreamField?.type || !downstreamField?.type) {
       return null; // Permissive — no type declared, no check needed

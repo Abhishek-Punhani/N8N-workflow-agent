@@ -8,13 +8,13 @@ export type Environment = 'development' | 'staging' | 'production' | 'test';
 
 export interface AppConfig {
   env: Environment;
-  
+
   llm: {
     apiKey: string;
     endpoint: string;
     model: string;
   };
-  
+
   n8n: {
     baseUrl: string;
     apiKey: string;
@@ -54,9 +54,12 @@ export function loadConfig(): AppConfig {
       maxExportSizeMb: parseInt(process.env.LIMIT_MAX_EXPORT_SIZE_MB || '500', 10),
     },
     timeouts: {
-      llmRequestMs: parseInt(process.env.TIMEOUT_LLM_MS || String(DEFAULT_TIMEOUTS.WorkflowPlanner), 10),
+      llmRequestMs: parseInt(
+        process.env.TIMEOUT_LLM_MS || String(DEFAULT_TIMEOUTS.WorkflowPlanner),
+        10
+      ),
       n8nRequestMs: parseInt(process.env.TIMEOUT_N8N_MS || String(DEFAULT_TIMEOUTS.Sandbox), 10),
-    }
+    },
   };
 
   // Environment-specific overrides
@@ -77,20 +80,22 @@ export function loadConfig(): AppConfig {
  */
 export function validateConfig(config: AppConfig): void {
   const missing: string[] = [];
-  
+
   if (config.env !== 'test') {
     if (!config.llm.apiKey) missing.push('LLM_API_KEY');
     if (!config.n8n.apiKey) missing.push('N8N_API_KEY');
   }
-  
+
   if (missing.length > 0) {
-    throw new Error(`Configuration validation failed. Missing required environment variables: ${missing.join(', ')}`);
+    throw new Error(
+      `Configuration validation failed. Missing required environment variables: ${missing.join(', ')}`
+    );
   }
-  
+
   if (isNaN(config.limits.maxRecords) || config.limits.maxRecords <= 0) {
     throw new Error('LIMIT_MAX_RECORDS must be a positive integer.');
   }
-  
+
   if (isNaN(config.limits.maxExportSizeMb) || config.limits.maxExportSizeMb <= 0) {
     throw new Error('LIMIT_MAX_EXPORT_SIZE_MB must be a positive integer.');
   }
