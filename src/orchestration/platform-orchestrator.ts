@@ -1,4 +1,5 @@
 import { IntakeAgent, WorkflowPlanner, RepairAgent, MAX_REPAIR_ATTEMPTS } from '../plan/index.js';
+import type { PatchAttempt } from '../plan/repair-agent.js';
 import {
   StructuralCheck,
   Compiler,
@@ -6,6 +7,7 @@ import {
   ContractCheck,
 } from '../verify/index.js';
 import { Sandbox, Deployer } from '../run/index.js';
+import { FailureClassification } from '../core/errors.js';
 import type { N8NWorkflow } from '../core/types.js';
 import { InMemoryRepository } from './repository.js';
 import { randomUUID } from 'crypto';
@@ -21,7 +23,7 @@ export interface PlatformOrchestratorConfig {
   sandbox: Sandbox;
   deployer: Deployer;
   repository?: InMemoryRepository;
-  logger?: { info: (msg: string) => void; error: (msg: string, err?: any) => void };
+  logger?: { info: (msg: string) => void; error: (msg: string, err?: unknown) => void };
 }
 
 export class PlatformOrchestrator {
@@ -57,7 +59,7 @@ export class PlatformOrchestrator {
     // 3. Verify & Sandbox loop
     let attempts = 0;
     let finalWorkflow: N8NWorkflow | null = null;
-    const previousPatches: any[] = [];
+    const previousPatches: PatchAttempt[] = [];
 
     while (attempts <= MAX_REPAIR_ATTEMPTS) {
       try {
@@ -87,12 +89,13 @@ export class PlatformOrchestrator {
           throw new Error('Compiled Check Failed: ' + JSON.stringify(compiledResult.errors));
         }
 
-        // Contract Check
+        // Contract Check — provenance defaults to false unless the StructuredObjective
+        // is extended in future to carry an explicit flag.
         this.logInfo(`Verification Attempt ${attempts + 1}: Contract Check`);
         const contractResult = this.config.contractCheck.verify({
           workflow_json: finalWorkflow,
-          required_fields: objective.required_fields,
-          provenance_required: objective.output_requirements?.format ? true : false, // Simplified check
+          required_fields: objective.required_fields ?? [],
+          provenance_required: false,
         });
         if (contractResult.status === 'violation') {
           throw new Error('Contract Check Failed: ' + JSON.stringify(contractResult.violations));
@@ -102,19 +105,13 @@ export class PlatformOrchestrator {
         this.logInfo(`Verification Attempt ${attempts + 1}: Sandbox`);
         await this.config.sandbox.execute({ workflow_json: finalWorkflow });
 
-        // If we get here, all checks passed!
         this.logInfo(`Verification successful on attempt ${attempts + 1}`);
         break;
       } catch (error) {
         attempts++;
         if (attempts > MAX_REPAIR_ATTEMPTS) {
           this.logError('Max repair attempts reached. Aborting.', error);
-          const errorMsg =
-            error instanceof Error
-              ? error.message
-              : typeof error === 'string'
-                ? error
-                : 'Unknown error';
+          const errorMsg = error instanceof Error ? error.message : String(error);
           throw new Error(
             `Orchestration failed after ${MAX_REPAIR_ATTEMPTS} repair attempts. Last error: ${errorMsg}`
           );
@@ -122,29 +119,28 @@ export class PlatformOrchestrator {
 
         this.logInfo(`Invoking Repair Agent (Attempt ${attempts} of ${MAX_REPAIR_ATTEMPTS})`);
 
-        // Mock a failure trace for Sandbox or Verify errors
+        const errorMsg = error instanceof Error ? error.message : String(error);
+
+        // Classify: sandbox errors are infrastructure, everything else is logic
+        const classification = errorMsg.toLowerCase().includes('sandbox')
+          ? FailureClassification.INFRASTRUCTURE_FAILURE
+          : FailureClassification.LOGIC_FAILURE;
+
         const failureTrace = {
-          step_id: ir.steps[0]?.id || 'unknown',
-          error_message:
-            error instanceof Error
-              ? error.message
-              : typeof error === 'string'
-                ? error
-                : 'Unknown error',
+          step_id: ir.steps[0]?.id ?? 'unknown',
+          error_message: errorMsg,
           context: {},
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          classification: 'validation_error' as any, // Mocking classification
+          classification,
           retry_count: attempts,
           timestamp: new Date().toISOString(),
         };
 
-        const repairInput = {
+        const repairOutput = await this.config.repair.repair({
           failure_trace: failureTrace,
           original_ir: ir,
           attempt_number: attempts,
           previous_patches: previousPatches,
-        };
-        const repairOutput = await this.config.repair.repair(repairInput);
+        });
 
         if (repairOutput.status === 'escalated') {
           throw new Error(
@@ -159,9 +155,9 @@ export class PlatformOrchestrator {
         }
 
         previousPatches.push({
-          attempt: attempts,
-          patch_description: repairOutput.patch_description || 'unknown',
-          timestamp: new Date().toISOString(),
+          attempt_number: attempts,
+          patch_description: repairOutput.patch_description ?? 'unknown',
+          result: 'still_failing',
         });
 
         ir = repairOutput.patched_ir;
@@ -173,6 +169,9 @@ export class PlatformOrchestrator {
     }
 
     // 4. Deploy
+    // Credential requirements are resolved from environment config by the Deployer's CredentialStore.
+    // The orchestrator passes an empty list; callers that need specific credentials should inject
+    // a pre-configured CredentialStore into the Deployer.
     this.logInfo('Deploying Workflow');
     const deployResult = await this.config.deployer.deploy({
       workflow_json: finalWorkflow,
@@ -197,11 +196,11 @@ export class PlatformOrchestrator {
     return { workflowId };
   }
 
-  private logInfo(msg: string) {
+  private logInfo(msg: string): void {
     if (this.config.logger) this.config.logger.info(msg);
   }
 
-  private logError(msg: string, err?: any) {
+  private logError(msg: string, err?: unknown): void {
     if (this.config.logger) this.config.logger.error(msg, err);
   }
 }

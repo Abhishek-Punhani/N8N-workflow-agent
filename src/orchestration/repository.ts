@@ -1,4 +1,4 @@
-import type { IR, StructuredObjective } from '../core/types.js';
+import type { IR, StructuredObjective, N8NWorkflow } from '../core/types.js';
 
 export interface UserPromptEntity {
   id: string;
@@ -24,7 +24,7 @@ export interface DeployedWorkflowEntity {
   id: string;
   irId: string;
   n8nWorkflowId: string;
-  workflow: any; // Using any or N8NWorkflow
+  workflow: N8NWorkflow;
   createdAt: Date;
 }
 
