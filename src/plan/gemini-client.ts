@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
 /**
  * AI Data Intelligence Platform - Gemini LLM Client
  *
@@ -35,7 +36,7 @@ export class GeminiLLMClient implements LLMClient {
     if (!key || key === 'your_gemini_api_key_here') {
       throw new Error(
         'GEMINI_API_KEY is not set. Add it to your .env file.\n' +
-        'Get a free key at: https://aistudio.google.com/app/apikey'
+          'Get a free key at: https://aistudio.google.com/app/apikey'
       );
     }
 
@@ -47,7 +48,7 @@ export class GeminiLLMClient implements LLMClient {
       generationConfig: {
         // JSON mode — Gemini returns pure JSON when responseMimeType is set
         responseMimeType: 'application/json',
-        temperature: 0.2,   // Low temperature for deterministic structured output
+        temperature: 0.2, // Low temperature for deterministic structured output
         topP: 0.8,
         maxOutputTokens: 2048,
       },

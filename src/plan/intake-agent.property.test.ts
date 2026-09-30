@@ -49,15 +49,24 @@ function validateStructuredObjective(obj: unknown): string[] {
   if (!Array.isArray(o['constraints'])) {
     errors.push('constraints must be an array');
   } else {
-    const validOps = new Set<string>(['equals','contains','greater_than','less_than','between','in']);
+    const validOps = new Set<string>([
+      'equals',
+      'contains',
+      'greater_than',
+      'less_than',
+      'between',
+      'in',
+    ]);
     (o['constraints'] as unknown[]).forEach((c, i) => {
       if (typeof c !== 'object' || c === null) {
         errors.push(`constraints[${i}] must be an object`);
         return;
       }
       const constraint = c as Record<string, unknown>;
-      if (typeof constraint['field'] !== 'string') errors.push(`constraints[${i}].field must be a string`);
-      if (!validOps.has(constraint['operator'] as string)) errors.push(`constraints[${i}].operator must be a valid ConstraintOperator`);
+      if (typeof constraint['field'] !== 'string')
+        errors.push(`constraints[${i}].field must be a string`);
+      if (!validOps.has(constraint['operator'] as string))
+        errors.push(`constraints[${i}].operator must be a valid ConstraintOperator`);
     });
   }
 
@@ -65,16 +74,27 @@ function validateStructuredObjective(obj: unknown): string[] {
   if (!Array.isArray(o['required_fields'])) {
     errors.push('required_fields must be an array');
   } else {
-    const validTypes = new Set<string>(['string','number','date','url','email','array','object']);
+    const validTypes = new Set<string>([
+      'string',
+      'number',
+      'date',
+      'url',
+      'email',
+      'array',
+      'object',
+    ]);
     (o['required_fields'] as unknown[]).forEach((f, i) => {
       if (typeof f !== 'object' || f === null) {
         errors.push(`required_fields[${i}] must be an object`);
         return;
       }
       const field = f as Record<string, unknown>;
-      if (typeof field['name'] !== 'string' || field['name'].trim() === '') errors.push(`required_fields[${i}].name must be a non-empty string`);
-      if (!validTypes.has(field['type'] as string)) errors.push(`required_fields[${i}].type must be a valid FieldDefinitionType`);
-      if (typeof field['required'] !== 'boolean') errors.push(`required_fields[${i}].required must be a boolean`);
+      if (typeof field['name'] !== 'string' || field['name'].trim() === '')
+        errors.push(`required_fields[${i}].name must be a non-empty string`);
+      if (!validTypes.has(field['type'] as string))
+        errors.push(`required_fields[${i}].type must be a valid FieldDefinitionType`);
+      if (typeof field['required'] !== 'boolean')
+        errors.push(`required_fields[${i}].required must be a boolean`);
     });
   }
 
@@ -106,24 +126,35 @@ function validateStructuredObjective(obj: unknown): string[] {
 // ============================================================================
 
 const arbOperator: fc.Arbitrary<ConstraintOperator> = fc.constantFrom(
-  'equals', 'contains', 'greater_than', 'less_than', 'between', 'in'
+  'equals',
+  'contains',
+  'greater_than',
+  'less_than',
+  'between',
+  'in'
 );
 
 const arbFieldType: fc.Arbitrary<FieldDefinitionType> = fc.constantFrom(
-  'string', 'number', 'date', 'url', 'email', 'array', 'object'
+  'string',
+  'number',
+  'date',
+  'url',
+  'email',
+  'array',
+  'object'
 );
 
 const arbConstraint = fc.record({
-  field:    fc.string({ minLength: 1, maxLength: 20 }),
+  field: fc.string({ minLength: 1, maxLength: 20 }),
   operator: arbOperator,
-  value:    fc.oneof(fc.string(), fc.integer(), fc.boolean()),
-  source:   fc.option(fc.string({ minLength: 1, maxLength: 30 }), { nil: undefined }),
+  value: fc.oneof(fc.string(), fc.integer(), fc.boolean()),
+  source: fc.option(fc.string({ minLength: 1, maxLength: 30 }), { nil: undefined }),
 });
 
 const arbFieldDef = fc.record({
-  name:        fc.stringMatching(/^[a-z][a-z_]{0,19}$/),
-  type:        arbFieldType,
-  required:    fc.boolean(),
+  name: fc.stringMatching(/^[a-z][a-z_]{0,19}$/),
+  type: arbFieldType,
+  required: fc.boolean(),
   description: fc.option(fc.string({ minLength: 1, maxLength: 50 }), { nil: undefined }),
 });
 
@@ -134,7 +165,9 @@ const arbDataSource = fc.record({
 
 const arbOutputRequirements = fc.option(
   fc.record({
-    format:      fc.option(fc.constantFrom('csv', 'json') as fc.Arbitrary<'csv'|'json'>, { nil: undefined }),
+    format: fc.option(fc.constantFrom('csv', 'json') as fc.Arbitrary<'csv' | 'json'>, {
+      nil: undefined,
+    }),
     max_records: fc.option(fc.integer({ min: 1, max: 1_000_000 }), { nil: undefined }),
   }),
   { nil: undefined }
@@ -143,24 +176,29 @@ const arbOutputRequirements = fc.option(
 /** Generate a complete valid LLM JSON response string. */
 const arbLLMResponse = fc
   .record({
-    target_entity:             fc.string({ minLength: 1, maxLength: 50 }).filter(s => s.trim().length > 0),
-    constraints:               fc.array(arbConstraint, { maxLength: 5 }),
-    required_fields:           fc.array(arbFieldDef, { maxLength: 8 }),
-    data_sources:              fc.array(arbDataSource, { maxLength: 4 }),
-    output_requirements:       arbOutputRequirements,
+    target_entity: fc.string({ minLength: 1, maxLength: 50 }).filter(s => s.trim().length > 0),
+    constraints: fc.array(arbConstraint, { maxLength: 5 }),
+    required_fields: fc.array(arbFieldDef, { maxLength: 8 }),
+    data_sources: fc.array(arbDataSource, { maxLength: 4 }),
+    output_requirements: arbOutputRequirements,
     interpretation_confidence: fc.float({ min: 0, max: 1, noNaN: true }),
-    assumptions:               fc.array(
+    assumptions: fc.array(
       fc.record({
-        description:   fc.string({ minLength: 1, maxLength: 60 }),
-        confidence:    fc.float({ min: 0, max: 1, noNaN: true }),
+        description: fc.string({ minLength: 1, maxLength: 60 }),
+        confidence: fc.float({ min: 0, max: 1, noNaN: true }),
         documentation: fc.string({ minLength: 1, maxLength: 100 }),
       }),
       { maxLength: 3 }
     ),
     clarification_needed: fc.option(
       fc.record({
-        questions:        fc.array(fc.string({ minLength: 5, maxLength: 60 }), { minLength: 1, maxLength: 3 }),
-        suggested_answers: fc.option(fc.array(fc.string({ minLength: 1 }), { maxLength: 3 }), { nil: undefined }),
+        questions: fc.array(fc.string({ minLength: 5, maxLength: 60 }), {
+          minLength: 1,
+          maxLength: 3,
+        }),
+        suggested_answers: fc.option(fc.array(fc.string({ minLength: 1 }), { maxLength: 3 }), {
+          nil: undefined,
+        }),
       }),
       { nil: null }
     ),
@@ -233,7 +271,12 @@ describe('Property 1: Output Schema Compliance', () => {
         expect(Array.isArray(constraints)).toBe(true);
 
         const validOps: ConstraintOperator[] = [
-          'equals','contains','greater_than','less_than','between','in',
+          'equals',
+          'contains',
+          'greater_than',
+          'less_than',
+          'between',
+          'in',
         ];
         for (const c of constraints) {
           expect(validOps).toContain(c.operator);
@@ -254,7 +297,13 @@ describe('Property 1: Output Schema Compliance', () => {
         expect(Array.isArray(required_fields)).toBe(true);
 
         const validTypes: FieldDefinitionType[] = [
-          'string','number','date','url','email','array','object',
+          'string',
+          'number',
+          'date',
+          'url',
+          'email',
+          'array',
+          'object',
         ];
         for (const f of required_fields) {
           expect(validTypes).toContain(f.type);
@@ -360,13 +409,15 @@ describe('Property 1 edge cases: malformed LLM output', () => {
 
   it('tolerates missing optional arrays by defaulting to []', async () => {
     const agent = new IntakeAgent({
-      llmClient: makeMockClient(JSON.stringify({
-        target_entity: 'AI startups',
-        // constraints and required_fields omitted
-        interpretation_confidence: 0.9,
-        assumptions: [],
-        clarification_needed: null,
-      })),
+      llmClient: makeMockClient(
+        JSON.stringify({
+          target_entity: 'AI startups',
+          // constraints and required_fields omitted
+          interpretation_confidence: 0.9,
+          assumptions: [],
+          clarification_needed: null,
+        })
+      ),
       timeoutMs: 5000,
     });
     const output = await agent.parse(validPrompt);

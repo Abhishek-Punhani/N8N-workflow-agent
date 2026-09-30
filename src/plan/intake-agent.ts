@@ -26,17 +26,9 @@ import type {
   ConstraintOperator,
   FieldDefinitionType,
 } from '../core/types.js';
-import {
-  PromptTooLongError,
-  PromptEmptyError,
-  PromptParsingError,
-} from '../core/errors.js';
+import { PromptTooLongError, PromptEmptyError, PromptParsingError } from '../core/errors.js';
 import { DEFAULT_TIMEOUTS } from '../core/config.js';
-import type {
-  IntakeAgentOutput,
-  Assumption,
-  ClarificationRequest,
-} from './types.js';
+import type { IntakeAgentOutput, Assumption, ClarificationRequest } from './types.js';
 
 // ============================================================================
 // Constants
@@ -248,7 +240,10 @@ RULES:
    * Parse the raw LLM JSON response and validate it against the expected shape.
    * Returns a fully typed IntakeAgentOutput.
    */
-  private parseAndValidateResponse(rawResponse: string, _originalPrompt: string): IntakeAgentOutput {
+  private parseAndValidateResponse(
+    rawResponse: string,
+    _originalPrompt: string
+  ): IntakeAgentOutput {
     let parsed: RawLLMResponse;
 
     try {
@@ -305,7 +300,12 @@ RULES:
     if (!Array.isArray(raw)) return [];
 
     const validOperators: ConstraintOperator[] = [
-      'equals', 'contains', 'greater_than', 'less_than', 'between', 'in',
+      'equals',
+      'contains',
+      'greater_than',
+      'less_than',
+      'between',
+      'in',
     ];
 
     return raw
@@ -325,7 +325,13 @@ RULES:
     if (!Array.isArray(raw)) return [];
 
     const validTypes: FieldDefinitionType[] = [
-      'string', 'number', 'date', 'url', 'email', 'array', 'object',
+      'string',
+      'number',
+      'date',
+      'url',
+      'email',
+      'array',
+      'object',
     ];
 
     return raw
@@ -371,9 +377,8 @@ RULES:
       .filter((a): a is Record<string, unknown> => typeof a === 'object' && a !== null)
       .map(a => ({
         description: typeof a['description'] === 'string' ? a['description'] : '',
-        confidence: typeof a['confidence'] === 'number'
-          ? Math.min(1.0, Math.max(0.0, a['confidence']))
-          : 0.5,
+        confidence:
+          typeof a['confidence'] === 'number' ? Math.min(1.0, Math.max(0.0, a['confidence'])) : 0.5,
         documentation: typeof a['documentation'] === 'string' ? a['documentation'] : '',
       }))
       .filter(a => a.description.length > 0);
