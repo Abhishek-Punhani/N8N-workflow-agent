@@ -70,8 +70,11 @@ services:
     environment:
       NODE_ENV: production
       PORT: '3000'
+      LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.1-pro-preview}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3-flash-preview}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL:-qwen/qwen3.8-27b}
       N8N_BASE_URL: http://n8n:5678
       N8N_API_KEY_FILE: /shared/n8n-api-key
       DB_HOST: postgres

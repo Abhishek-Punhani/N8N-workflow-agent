@@ -10,8 +10,8 @@ export interface AppConfig {
   env: Environment;
 
   llm: {
+    provider: 'gemini' | 'groq';
     apiKey: string;
-    endpoint: string;
     model: string;
   };
 
@@ -37,14 +37,23 @@ export interface AppConfig {
  */
 export function loadConfig(): AppConfig {
   const env = (process.env.NODE_ENV || 'development') as Environment;
+  
+  const provider = (process.env.LLM_PROVIDER || 'gemini').toLowerCase() as 'gemini' | 'groq';
+  
+  let apiKey = '';
+  let model = '';
+  
+  if (provider === 'groq') {
+    apiKey = process.env.GROQ_API_KEY || '';
+    model = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
+  } else {
+    apiKey = process.env.GEMINI_API_KEY || process.env.LLM_API_KEY || '';
+    model = process.env.GEMINI_MODEL || process.env.LLM_MODEL || 'gemini-3-flash-preview';
+  }
 
   const config: AppConfig = {
     env,
-    llm: {
-      apiKey: process.env.GEMINI_API_KEY || process.env.LLM_API_KEY || '',
-      endpoint: 'https://generativelanguage.googleapis.com/v1beta',
-      model: process.env.GEMINI_MODEL || process.env.LLM_MODEL || 'gemini-3.1-pro-preview',
-    },
+    llm: { provider, apiKey, model },
     n8n: {
       baseUrl: process.env.N8N_BASE_URL || 'http://localhost:5678',
       apiKey: process.env.N8N_API_KEY || '',
@@ -59,7 +68,6 @@ export function loadConfig(): AppConfig {
     },
   };
 
-
   return config;
 }
 
@@ -71,7 +79,8 @@ export function loadConfig(): AppConfig {
 export function validateConfig(config: AppConfig): void {
   const missing: string[] = [];
   if (!['development', 'staging', 'production', 'test'].includes(config.env)) throw new Error('Invalid NODE_ENV');
-  if (!/^gemini-3[.\w-]*$/.test(config.llm.model)) throw new Error('LLM_MODEL must be a Gemini 3 model ID');
+  if (!['gemini', 'groq'].includes(config.llm.provider)) throw new Error('Invalid LLM_PROVIDER');
+  
   for (const timeout of Object.values(config.timeouts)) {
     if (!Number.isSafeInteger(timeout) || timeout <= 0) throw new Error('Timeouts must be positive integers');
   }
@@ -79,7 +88,9 @@ export function validateConfig(config: AppConfig): void {
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Invalid N8N_BASE_URL');
 
   if (config.env !== 'test') {
-    if (!config.llm.apiKey) missing.push('GEMINI_API_KEY or LLM_API_KEY');
+    if (!config.llm.apiKey) {
+      missing.push(config.llm.provider === 'groq' ? 'GROQ_API_KEY' : 'GEMINI_API_KEY');
+    }
     if (!config.n8n.apiKey) missing.push('N8N_API_KEY');
   }
 
@@ -87,6 +98,10 @@ export function validateConfig(config: AppConfig): void {
     throw new Error(
       `Configuration validation failed. Missing required environment variables: ${missing.join(', ')}`
     );
+  }
+
+  if (config.llm.provider === 'gemini' && !/^gemini-3[.\w-]*$/.test(config.llm.model)) {
+    throw new Error('GEMINI_MODEL must be a Gemini 3 model ID.');
   }
 
   if (!Number.isSafeInteger(config.limits.maxRecords) || config.limits.maxRecords <= 0) {

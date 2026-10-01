@@ -8,7 +8,7 @@ A Gemini 3 powered workspace for turning a natural-language request and a public
 
 1. Copy `.env.example` to `.env` and fill the required secrets.
 2. `docker compose up -d --build --wait`
-3. Open **http://localhost:8080**. Sign in using `PLATFORM_API_TOKEN` from your local `.env`.
+3. Open **http://localhost**. Sign in using `PLATFORM_API_TOKEN` from your local `.env`.
 4. Describe your dataset, including one public HTTPS JSON API URL and required fields.
 
 Example:
@@ -17,7 +17,7 @@ Example:
 
 JSONPlaceholder is a public test dataset, not real customer data. The example cards only fill the prompt; they never supply canned results.
 
-The n8n editor is available on loopback at http://localhost:5678, using `N8N_OWNER_EMAIL` / `N8N_OWNER_PASSWORD`. PostgreSQL and the platform API are not exposed directly. [Deployment details](DEPLOYMENT.md).
+The platform API is available on loopback at http://localhost:3000 for manual checks, and the dashboard also proxies it through `/api/*`. The n8n editor is available on loopback at http://localhost:5678, using `N8N_OWNER_EMAIL` / `N8N_OWNER_PASSWORD`. PostgreSQL is not exposed directly. [Deployment details](DEPLOYMENT.md).
 
 ## What runs
 

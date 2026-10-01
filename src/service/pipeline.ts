@@ -4,7 +4,7 @@ import { WorkflowPlanner } from '../plan/workflow-planner.js';
 import { RepairAgent, type PatchAttempt } from '../plan/repair-agent.js';
 import { FailureClassification } from '../core/errors.js';
 import { DataContractValidator } from '../verify/data-contract-validator.js';
-import { GeminiLLMClient } from '../plan/gemini-client.js';
+import { createLLMClient } from '../plan/llm-registry.js';
 import { StructuralCheck } from '../verify/structural-check.js';
 import type { AppConfig } from '../config/env.js';
 import type { StructuredObjective } from '../core/types.js';
@@ -65,7 +65,7 @@ export function validateRecords(records: Record<string, unknown>[], objective: S
 }
 
 export async function runJob(store: Store, job: Job, config: AppConfig): Promise<void> {
-  const llm = new GeminiLLMClient(config.llm.apiKey, config.llm.model);
+  const llm = createLLMClient(config);
   const n8n = new N8nRuntime(config.n8n.baseUrl, config.n8n.apiKey, config.timeouts.n8nRequestMs);
   let stage = '';
   const progress = async (name: string, action: () => Promise<void> | void) => {

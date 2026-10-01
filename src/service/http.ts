@@ -59,6 +59,15 @@ export function createApi(store: Store, config: AppConfig, token: string) {
       const url = new URL(req.url ?? '/', 'http://localhost');
       const path = url.pathname;
       const method = req.method ?? 'GET';
+      if (path === '/' && method === 'GET') {
+        return json(res, 200, {
+          service: 'forma-platform-api',
+          status: 'ok',
+          dashboard: 'http://localhost',
+          health: '/health',
+          readiness: '/ready',
+        });
+      }
       if (path === '/health' && method === 'GET') return json(res, 200, { status: 'ok' });
       if (path === '/ready' && method === 'GET') {
         try {

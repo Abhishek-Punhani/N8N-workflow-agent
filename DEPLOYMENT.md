@@ -10,11 +10,11 @@ docker compose up -d --build --wait
 docker compose ps
 ```
 
-Dashboard: http://localhost:8080. Its sign-in key is `PLATFORM_API_TOKEN`. n8n editor: http://localhost:5678, using the configured owner account. Keep `.env` mode 600 and do not paste it into issues or build logs.
+Dashboard: http://localhost. Its sign-in key is `PLATFORM_API_TOKEN`. Platform API: http://localhost:3000 for manual loopback checks. n8n editor: http://localhost:5678, using the configured owner account. Keep `.env` mode 600 and do not paste it into issues or build logs.
 
 The bootstrap service uses the n8n owner credentials to provision a scoped API key, stores it in a private Docker volume and reuses it on restart. It stops on provisioning errors. The current key lifetime is one year; rotate before expiry. The bootstrap uses n8n's internal owner/API-key management routes; this is version-dependent, so n8n is pinned to 2.41.4. Upgrades require rerunning the full-stack test. Do not point the bootstrap at an unrelated n8n instance.
 
-PostgreSQL and the platform listen only on the Compose network. The dashboard and n8n editor bind to loopback by default. Container builds exclude `.env`, caches and local dependencies, and application containers run as non-root. Never run `docker compose down -v` against data you need.
+PostgreSQL listens only on the Compose network. The dashboard, platform API and n8n editor bind to loopback by default. Container builds exclude `.env`, caches and local dependencies, and application containers run as non-root. Never run `docker compose down -v` against data you need.
 
 ## External deployment gate
 
