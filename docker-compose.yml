@@ -87,6 +87,7 @@ services:
       TIMEOUT_N8N_MS: ${TIMEOUT_N8N_MS:-120000}
       LIMIT_MAX_RECORDS: ${LIMIT_MAX_RECORDS:-1000000}
       LIMIT_MAX_EXPORT_SIZE_MB: ${LIMIT_MAX_EXPORT_SIZE_MB:-500}
+      LIMIT_WEB_PAGES: ${LIMIT_WEB_PAGES:-80}
     volumes:
       - shared_env:/shared:ro
     depends_on:

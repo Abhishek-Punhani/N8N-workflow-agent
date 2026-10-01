@@ -25,12 +25,12 @@ The platform API is available on loopback at http://localhost:3000 for manual ch
 
 - `http.ts`: sessions, prompt submission, status, pagination, streamed disk-backed CSV/JSON downloads.
 - `store.ts`: PostgreSQL jobs, claims, recovery state and transactional result persistence.
-- `pipeline.ts`: Gemini intake/planning, deterministic checks, targeted structural repair, n8n trial and full execution.
+- `pipeline.ts`: intake, deterministic pass-through planning when acquired records already match the requested fields, LLM planning for harder mappings, deterministic checks, targeted structural repair, n8n trial and full execution.
 - `compiler.ts`: vetted code templates; model data is serialized, never executed as code.
-- `source.ts`: HTTPS JSON acquisition, address pinning, private-network blocking and bounded response size.
+- `source.ts`: HTTPS JSON acquisition plus bounded storefront discovery from same-site product links, sitemaps, JSON-LD and public catalog endpoints; address pinning, private-network blocking and bounded response size.
 - `n8n.ts`: real create/activate/webhook/deactivate/delete lifecycle.
 
-Sources must currently return a JSON array of objects (10 MB acquisition cap). One source and linear graphs are supported. Acquisition parses a source snapshot once; both trial and full n8n runs process that same snapshot. Unsupported search, HTML, authenticated sources and branches fail explicitly. Records are persisted only after the execution and runtime contract checks succeed.
+Sources can be direct JSON record arrays/objects or public HTML storefronts that expose product pages through same-site links, sitemaps, JSON-LD or public catalog APIs. HTML storefront discovery is bounded by `LIMIT_WEB_PAGES`. One starting source and linear graphs are supported. Acquisition parses a source snapshot once; both trial and full n8n runs process that same snapshot. CAPTCHA, login-only pages, private networks, embedded URL credentials, nonstandard ports, search-engine scraping and arbitrary multi-site browsing fail explicitly. Records are persisted only after the execution and runtime contract checks succeed.
 
 The older `src/orchestration`, `src/run`, and `src/verify/compiler.ts` modules remain design prototypes with unit coverage. They are **not the production HTTP execution path** and must not be substituted for `src/service` without completing their integration. In particular, the old `Sandbox` simulates fixtures.
 

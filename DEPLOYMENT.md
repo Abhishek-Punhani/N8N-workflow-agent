@@ -26,7 +26,7 @@ Before making it public:
 - Put secrets in your deployment secret manager and replace local passwords/tokens. Preserve the n8n encryption key across upgrades and restores.
 - Add user identities, authorization/tenant isolation and audit logging before offering separate customer workspaces. Current authentication grants access to the entire workspace.
 - Use managed PostgreSQL or establish encrypted backups and test restore procedures. Configure external DB TLS if deployed outside the private Docker network; the included local pool is not a managed-database TLS configuration.
-- Test the expected load and set container memory/CPU and export disk quotas. The one-million-record/500-MB export limits are enforcement ceilings, not demonstrated capacity. Acquisition is limited to 10 MB per source.
+- Test the expected load and set container memory/CPU and export disk quotas. The one-million-record/500-MB export limits are enforcement ceilings, not demonstrated capacity. Raw acquisition is limited to 10 MB per fetched page, and storefront crawling is bounded by `LIMIT_WEB_PAGES`.
 - Pin all base image digests in your release pipeline, scan images, and validate the Gemini model's availability and quota for your account.
 
 Kubernetes files are deployment templates, **not a validated cluster deployment**. No changes have been made to the existing local Kubernetes clusters. They need your image registry, ingress/TLS, secret management, storage class, resource sizing and real cluster validation. Compose is the tested path.
@@ -36,7 +36,7 @@ Kubernetes files are deployment templates, **not a validated cluster deployment*
 - `/api/health`: process liveness; `/api/ready`: PostgreSQL and n8n readiness (no billable Gemini request).
 - `docker compose logs --tail=100 platform n8n-bootstrapper`: startup and provisioning. Logs do not print secrets or prompts.
 - Gemini HTTP 401/403: check key access. HTTP 429: quota/rate limit; no fallback. Gemini 5xx gets at most three attempts on the configured model, within the request timeout.
-- Unsupported source: supply a direct HTTPS JSON array endpoint. Redirects, private addresses, HTML, embedded URL credentials and nonstandard ports are rejected.
+- Unsupported source: supply a direct HTTPS JSON endpoint or a public storefront with same-site product links, sitemaps, JSON-LD or public catalog APIs. Redirects, private addresses, embedded URL credentials and nonstandard ports are rejected. CAPTCHA or login-only pages require an official API/export or an authenticated connector; the platform detects those blocks rather than bypassing them.
 - Failed jobs retain the stage/error and zero published records. Jobs are durably queued. Stale running jobs are marked failed after ten minutes without progress instead of being silently replayed. Inspect n8n before retrying an interrupted job.
 - Trial workflows are removed after the trial. Full workflows are retained but deactivated after execution. Do not expose their webhook routes to the internet.
 - Exports are written to a private temporary directory, size-checked, streamed and deleted. CSV cells are escaped and formula-prefixed values are neutralized.
