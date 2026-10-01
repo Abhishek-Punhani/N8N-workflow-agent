@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+.git
+node_modules
+dashboard
+coverage
+reports
+dist
+*.log
+*.tsbuildinfo
+.kiro

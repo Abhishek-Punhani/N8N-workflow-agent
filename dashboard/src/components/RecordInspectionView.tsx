@@ -33,7 +33,7 @@ export const RecordInspectionView: React.FC<Props> = ({ inspection }) => {
           <tbody className="bg-white divide-y divide-gray-200">
             {inspection.records.map((record, idx) => (
               <tr key={idx} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{record.id || idx}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{String(record.id ?? idx)}</td>
                 <td className="px-6 py-4 text-sm text-gray-800">
                   <div className="truncate max-w-xs">{JSON.stringify(record).substring(0, 50)}...</div>
                 </td>
@@ -42,10 +42,10 @@ export const RecordInspectionView: React.FC<Props> = ({ inspection }) => {
                     <div className="flex flex-col text-xs text-green-600">
                       <div className="flex items-center space-x-1">
                         <ShieldCheck className="w-4 h-4" />
-                        <span>Conf: {(record._provenance.extraction_confidence * 100).toFixed(1)}%</span>
+                        <span>Conf: {(Number((record._provenance as Record<string, unknown>).extraction_confidence) * 100).toFixed(1)}%</span>
                       </div>
-                      <span className="text-gray-500 truncate max-w-[150px]" title={record._provenance.source_url}>
-                        {record._provenance.source_url}
+                      <span className="text-gray-500 truncate max-w-[150px]" title={String((record._provenance as Record<string, unknown>).source_url)}>
+                        {String((record._provenance as Record<string, unknown>).source_url)}
                       </span>
                     </div>
                   ) : (

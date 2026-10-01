@@ -13,7 +13,7 @@ export interface NodeStatus {
 }
 
 export interface ExecutionStatus {
-  workflow_id: string;
+  workflow_id: string | null;
   execution_id: string;
   status: 'pending' | 'running' | 'completed' | 'failed' | 'stalled';
   node_statuses: NodeStatus[];
@@ -24,8 +24,9 @@ export interface ExecutionStatus {
 }
 
 export interface ExecutionResult {
+  prompt?: string;
   execution_id: string;
-  workflow_id: string;
+  workflow_id: string | null;
   objective_id?: string;
   status: ExecutionStatus['status'];
   records_processed: number;
@@ -39,7 +40,7 @@ export interface ExecutionResult {
 export interface RecordInspection {
   execution_id: string;
   total_records: number;
-  records: any[];
+  records: Record<string, unknown>[];
 }
 
 export interface ExportOptions {
@@ -49,6 +50,7 @@ export interface ExportOptions {
 }
 
 export interface DashboardView {
+  model?: string;
   verification_stages: VerificationStage[];
   execution_results: ExecutionResult[];
   record_inspection?: RecordInspection;

@@ -1,31 +1,18 @@
-FROM node:20-alpine AS builder
-
+FROM node:22-alpine AS builder
 WORKDIR /app
-
-# Install dependencies
 COPY package.json package-lock.json ./
 RUN npm ci
-
-# Copy source code and build
-COPY tsconfig.json tsconfig.tsbuildinfo ./
-COPY src/ ./src/
+COPY tsconfig.json ./
+COPY src ./src
 RUN npm run build
 
-# Production image
-FROM node:20-alpine AS production
-
+FROM node:22-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production
-
-# Copy built artifacts and production dependencies
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
-
+RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=builder /app/dist ./dist
-
-# Create a non-root user for security
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
-
+USER node
 EXPOSE 3000
-CMD ["/bin/sh", "-c", "if [ -f /shared/.env ]; then export $(cat /shared/.env | xargs); fi && node dist/server.js"]
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s CMD node -e "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "dist/server.js"]

@@ -1,86 +1,45 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
-/**
- * AI Data Intelligence Platform - Gemini LLM Client
- *
- * Implements the LLMClient interface using Google's Gemini API.
- * Reads GEMINI_API_KEY (and optionally GEMINI_MODEL) from environment
- * variables loaded via dotenv.
- *
- * Usage:
- *   import { GeminiLLMClient } from './gemini-client.js';
- *   import { IntakeAgent } from './intake-agent.js';
- *
- *   const agent = new IntakeAgent({ llmClient: new GeminiLLMClient() });
- *   const output = await agent.parse("Find 100 Indian AI startups...");
- */
-
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import 'dotenv/config';
+import { setTimeout as delay } from 'node:timers/promises';
 import type { LLMClient } from './intake-agent.js';
 
-// ============================================================================
-// Constants
-// ============================================================================
-
-const DEFAULT_MODEL = 'gemini-1.5-flash';
-
-// ============================================================================
-// GeminiLLMClient
-// ============================================================================
-
+/** Single provider for every planning and repair call. No provider/model fallback. */
 export class GeminiLLMClient implements LLMClient {
-  private readonly model: GenerativeModel;
+  private readonly apiKey: string;
+  public readonly modelName: string;
 
   constructor(apiKey?: string, modelName?: string) {
-    const key = apiKey ?? process.env['GEMINI_API_KEY'];
-    if (!key || key === 'your_gemini_api_key_here') {
-      throw new Error(
-        'GEMINI_API_KEY is not set. Add it to your .env file.\n' +
-          'Get a free key at: https://aistudio.google.com/app/apikey'
-      );
-    }
-
-    const model = modelName ?? process.env['GEMINI_MODEL'] ?? DEFAULT_MODEL;
-    const genAI = new GoogleGenerativeAI(key);
-
-    this.model = genAI.getGenerativeModel({
-      model,
-      generationConfig: {
-        // JSON mode — Gemini returns pure JSON when responseMimeType is set
-        responseMimeType: 'application/json',
-        temperature: 0.2, // Low temperature for deterministic structured output
-        topP: 0.8,
-        maxOutputTokens: 2048,
-      },
-    });
+    this.apiKey = apiKey ?? process.env.GEMINI_API_KEY ?? process.env.LLM_API_KEY ?? '';
+    this.modelName = modelName ?? process.env.GEMINI_MODEL ?? process.env.LLM_MODEL ?? 'gemini-3.1-pro-preview';
+    if (!this.apiKey) throw new Error('GEMINI_API_KEY (or LLM_API_KEY) is required');
+    if (!/^gemini-3[.\w-]*$/.test(this.modelName)) throw new Error('A Gemini 3 model ID is required');
   }
 
-  /**
-   * Send system + user messages to Gemini and return the raw JSON string.
-   * Respects the AbortSignal so the IntakeAgent's 30s timeout is enforced.
-   */
-  public async complete(
-    systemPrompt: string,
-    userMessage: string,
-    signal: AbortSignal
-  ): Promise<string> {
-    // Gemini doesn't have a native system-role message in the basic SDK;
-    // we prepend the system prompt as the first turn in the conversation.
-    const prompt = `${systemPrompt}\n\n${userMessage}`;
-
-    // Wrap in an AbortSignal-aware race
-    const generatePromise = this.model.generateContent(prompt);
-
-    const result = await Promise.race([
-      generatePromise,
-      new Promise<never>((_, reject) => {
-        signal.addEventListener('abort', () =>
-          reject(Object.assign(new Error('Request aborted'), { name: 'AbortError' }))
-        );
+  async complete(systemPrompt: string, userMessage: string, signal: AbortSignal): Promise<string> {
+    signal.throwIfAborted();
+    let response!: Response;
+    for (let attempt = 0; attempt < 3; attempt++) {
+    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(this.modelName)}:generateContent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': this.apiKey },
+      signal,
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+        generationConfig: { responseMimeType: 'application/json', temperature: 1, maxOutputTokens: 16384 },
       }),
-    ]);
-
-    const text = result.response.text();
-    return text.trim();
+    });
+    if (response.status < 500 || attempt === 2) break;
+    await response.body?.cancel();
+    await delay(1000 * 2 ** attempt, undefined, { signal });
+    }
+    // Do not echo upstream bodies: they may contain request contents or credentials.
+    if (!response.ok) throw new Error(`Gemini request failed (HTTP ${response.status}, model ${this.modelName})`);
+    const body = await response.json() as { candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string; thought?: boolean }> } }> };
+    const candidate = body.candidates?.[0];
+    if (candidate?.finishReason !== 'STOP') throw new Error(`Gemini did not complete: ${candidate?.finishReason ?? 'no candidate'}`);
+    const text = candidate.content?.parts?.filter(p => !p.thought).map(p => p.text ?? '').join('').trim();
+    if (!text) throw new Error('Gemini returned an empty response');
+    JSON.parse(text);
+    return text;
   }
 }

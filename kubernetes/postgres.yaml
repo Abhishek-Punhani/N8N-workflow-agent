@@ -6,6 +6,8 @@ metadata:
   labels:
     app: postgres
 spec:
+  strategy:
+    type: Recreate
   replicas: 1
   selector:
     matchLabels:
@@ -17,7 +19,15 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:15-alpine
+          image: postgres:17-alpine
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U ai_platform -d ai_data_db"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests: { cpu: "250m", memory: "256Mi" }
+            limits: { cpu: "1", memory: "1Gi" }
           ports:
             - containerPort: 5432
           env:

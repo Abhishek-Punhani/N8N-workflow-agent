@@ -1,168 +1,63 @@
-# AI Data Intelligence Platform
+# Forma · Data Intelligence
 
-Transform natural language prompts into verified n8n workflows. This platform separates LLM reasoning from deterministic validation, ensuring workflows are verifiable, secure, and maintainable.
+A Gemini 3 powered workspace for turning a natural-language request and a public JSON API into a source-linked dataset. React frontend, TypeScript API, PostgreSQL persistence, and actual n8n execution.
 
-## Overview
+**Release status:** working Docker application; the full `.kiro` product specification is not yet launch-complete. See [the readiness audit](reports/READINESS.md) for verified behavior, remaining requirements, and evidence. Existing unit tests alone are not evidence of live integrations.
 
-The AI Data Intelligence Platform implements a three-phase architecture:
+## Run locally
 
-1. **PLAN** - LLM-based planning using Intake Agent and Workflow Planner
-2. **VERIFY** - Deterministic validation with structural checks, compilation, and contract verification
-3. **RUN** - Deployment and execution with sandbox testing and observability
+1. Copy `.env.example` to `.env` and fill the required secrets.
+2. `docker compose up -d --build --wait`
+3. Open **http://localhost:8080**. Sign in using `PLATFORM_API_TOKEN` from your local `.env`.
+4. Describe your dataset, including one public HTTPS JSON API URL and required fields.
 
-## Features
+Example:
 
-- **Natural Language to Workflow** - Convert user prompts into structured n8n workflows
-- **Deterministic Validation** - Property-based testing ensures correctness
-- **Capability Vocabulary** - 11 step types for data processing workflows
-- **Provenance Tracking** - Full traceability of data sources and transformations
-- **Fault Tolerance** - Automatic retries and degraded mode handling
-- **Observability** - Real-time workflow monitoring and status tracking
+> From https://jsonplaceholder.typicode.com/users collect all users with id, name and email. Return JSON.
 
-## Tech Stack
+JSONPlaceholder is a public test dataset, not real customer data. The example cards only fill the prompt; they never supply canned results.
 
-- **Runtime**: Node.js >= 18.0.0
-- **Language**: TypeScript with strict mode
-- **Testing**: Jest with fast-check for property-based testing
-- **Workflow Engine**: n8n API
-- **Database**: PostgreSQL (production) / SQLite (development)
+The n8n editor is available on loopback at http://localhost:5678, using `N8N_OWNER_EMAIL` / `N8N_OWNER_PASSWORD`. PostgreSQL and the platform API are not exposed directly. [Deployment details](DEPLOYMENT.md).
 
-## Installation
+## What runs
 
-```bash
-# Clone the repository
-git clone <repository-url>
-cd n8n-agent
+`src/server.ts` starts the authenticated API and durable queue worker. `src/service/` is the connected application path:
 
-# Install dependencies
-npm install
+- `http.ts`: sessions, prompt submission, status, pagination, streamed disk-backed CSV/JSON downloads.
+- `store.ts`: PostgreSQL jobs, claims, recovery state and transactional result persistence.
+- `pipeline.ts`: Gemini intake/planning, deterministic checks, targeted structural repair, n8n trial and full execution.
+- `compiler.ts`: vetted code templates; model data is serialized, never executed as code.
+- `source.ts`: HTTPS JSON acquisition, address pinning, private-network blocking and bounded response size.
+- `n8n.ts`: real create/activate/webhook/deactivate/delete lifecycle.
 
-# Build the project
-npm run build
+Sources must currently return a JSON array of objects (10 MB acquisition cap). One source and linear graphs are supported. Acquisition parses a source snapshot once; both trial and full n8n runs process that same snapshot. Unsupported search, HTML, authenticated sources and branches fail explicitly. Records are persisted only after the execution and runtime contract checks succeed.
 
-# Run linting
-npm run lint
+The older `src/orchestration`, `src/run`, and `src/verify/compiler.ts` modules remain design prototypes with unit coverage. They are **not the production HTTP execution path** and must not be substituted for `src/service` without completing their integration. In particular, the old `Sandbox` simulates fixtures.
 
-# Format code
-npm run format
-```
+## Verification
 
-## Project Structure
+Use Node.js 22+ for development.
 
-```
-src/
-├── core/           # Core type definitions and schemas
-├── plan/           # LLM-based planning components
-├── verify/         # Deterministic validation pipeline
-├── run/            # Execution and deployment
-├── observability/  # Monitoring and metrics
-└── dashboard/      # UI interface types
-```
-
-## Configuration
-
-Create a `.env` file in the root directory:
-
-```env
-# LLM Configuration
-LLM_ENDPOINT=https://api.openai.com/v1
-LLM_API_KEY=your-api-key
-LLM_MODEL=gpt-4
-
-# n8n Configuration
-N8N_API_URL=https://your-n8n-instance.com
-N8N_API_KEY=your-api-key
-
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/ai_data_platform
-
-# Platform Settings
-PLATFORM_TIMEOUT_INTAKE_MS=30000
-PLATFORM_TIMEOUT_PLANNER_MS=30000
-PLATFORM_MAX_EXPORT_RECORDS=1000000
-PLATFORM_MAX_EXPORT_SIZE_MB=500
-```
-
-## Usage
-
-### From TypeScript
-
-```typescript
-import { PlatformOrchestrator } from '@core/index.js';
-
-const orchestrator = new PlatformOrchestrator({
-  llmEndpoint: process.env.LLM_ENDPOINT!,
-  n8nApiUrl: process.env.N8N_API_URL!,
-});
-
-const result = await orchestrator.processPrompt('Find all customers in California with orders over $1000');
-console.log(result);
-```
-
-### CLI Interface
-
-```bash
-# Process a prompt
-npx ts-node src/cli/index.ts --prompt "Find all customers in California"
-
-# View execution status
-npx ts-node src/cli/index.ts --status <execution_id>
-
-# Deploy workflow
-npx ts-node src/cli/index.ts --deploy <workflow_id>
-```
-
-## Development
-
-### Running Tests
-
-```bash
-# Unit tests
-npm run test
-
-# Property-based tests
-npm run test:properties
-
-# All tests
-npm run test:all
-```
-
-### Code Quality
-
-```bash
-# Lint check
-npm run lint
-
-# Lint with fixes
-npm run lint:fix
-
-# Format check
-npm run format:check
-
-# Format all files
-npm run format
-
-# Full check (lint + format + build)
+```sh
+npm ci
+npm ci --prefix dashboard
 npm run check
+npm test
+npm run build --prefix dashboard
+npm test --prefix dashboard
+npm run lint --prefix dashboard
+npm run test:stack
+npx playwright install chromium
+npm run test:browser
 ```
 
-### Build
+`test:stack` requires running Docker services and a funded/available Gemini model; it makes real billable API calls and creates workflows and datasets. `test:browser` requires a completed live dataset from that script. No mocked provider or fallback is used in either test. Unit tests remain isolated and deterministic.
 
-```bash
-# Build for production
-npm run build
+## Configuration and design
 
-# Watch mode for development
-npx tsc --watch
-```
-
-## Documentation
-
-- [Architecture Overview](docs/architecture.md)
-- [Capability Vocabulary](docs/capabilities.md)
-- [IR Schema](docs/ir-schema.md)
-- [API Reference](docs/api.md)
-
-## License
-
-MIT
+- [Environment template](.env.example)
+- [Deployment and operations](DEPLOYMENT.md)
+- [HTTP API](docs/API.md)
+- [Requirements](.kiro/specs/ai-data-intelligence-platform/requirements.md)
+- [Design](.kiro/specs/ai-data-intelligence-platform/design.md)
+- [Task audit](reports/READINESS.md)

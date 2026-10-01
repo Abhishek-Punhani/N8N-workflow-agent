@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 import { DEFAULT_TIMEOUTS } from '../core/config.js';
 
 // Load .env if present
-dotenv.config();
+dotenv.config({ quiet: true });
 
 export type Environment = 'development' | 'staging' | 'production' | 'test';
 
@@ -41,34 +41,24 @@ export function loadConfig(): AppConfig {
   const config: AppConfig = {
     env,
     llm: {
-      apiKey: process.env.LLM_API_KEY || '',
-      endpoint: process.env.LLM_ENDPOINT || 'https://api.openai.com/v1',
-      model: process.env.LLM_MODEL || 'gpt-4o',
+      apiKey: process.env.GEMINI_API_KEY || process.env.LLM_API_KEY || '',
+      endpoint: 'https://generativelanguage.googleapis.com/v1beta',
+      model: process.env.GEMINI_MODEL || process.env.LLM_MODEL || 'gemini-3.1-pro-preview',
     },
     n8n: {
       baseUrl: process.env.N8N_BASE_URL || 'http://localhost:5678',
       apiKey: process.env.N8N_API_KEY || '',
     },
     limits: {
-      maxRecords: parseInt(process.env.LIMIT_MAX_RECORDS || '1000000', 10),
-      maxExportSizeMb: parseInt(process.env.LIMIT_MAX_EXPORT_SIZE_MB || '500', 10),
+      maxRecords: Number(process.env.LIMIT_MAX_RECORDS || '1000000'),
+      maxExportSizeMb: Number(process.env.LIMIT_MAX_EXPORT_SIZE_MB || '500'),
     },
     timeouts: {
-      llmRequestMs: parseInt(
-        process.env.TIMEOUT_LLM_MS || String(DEFAULT_TIMEOUTS.WorkflowPlanner),
-        10
-      ),
-      n8nRequestMs: parseInt(process.env.TIMEOUT_N8N_MS || String(DEFAULT_TIMEOUTS.Sandbox), 10),
+      llmRequestMs: Number(process.env.TIMEOUT_LLM_MS || String(DEFAULT_TIMEOUTS.WorkflowPlanner)),
+      n8nRequestMs: Number(process.env.TIMEOUT_N8N_MS || String(DEFAULT_TIMEOUTS.Sandbox)),
     },
   };
 
-  // Environment-specific overrides
-  if (env === 'production') {
-    config.n8n.baseUrl = process.env.N8N_BASE_URL || 'http://n8n-platform:5678';
-  } else if (env === 'test') {
-    config.llm.apiKey = 'test-key';
-    config.n8n.apiKey = 'test-key';
-  }
 
   return config;
 }
@@ -80,9 +70,16 @@ export function loadConfig(): AppConfig {
  */
 export function validateConfig(config: AppConfig): void {
   const missing: string[] = [];
+  if (!['development', 'staging', 'production', 'test'].includes(config.env)) throw new Error('Invalid NODE_ENV');
+  if (!/^gemini-3[.\w-]*$/.test(config.llm.model)) throw new Error('LLM_MODEL must be a Gemini 3 model ID');
+  for (const timeout of Object.values(config.timeouts)) {
+    if (!Number.isSafeInteger(timeout) || timeout <= 0) throw new Error('Timeouts must be positive integers');
+  }
+  const url = new URL(config.n8n.baseUrl);
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Invalid N8N_BASE_URL');
 
   if (config.env !== 'test') {
-    if (!config.llm.apiKey) missing.push('LLM_API_KEY');
+    if (!config.llm.apiKey) missing.push('GEMINI_API_KEY or LLM_API_KEY');
     if (!config.n8n.apiKey) missing.push('N8N_API_KEY');
   }
 
@@ -92,11 +89,11 @@ export function validateConfig(config: AppConfig): void {
     );
   }
 
-  if (isNaN(config.limits.maxRecords) || config.limits.maxRecords <= 0) {
+  if (!Number.isSafeInteger(config.limits.maxRecords) || config.limits.maxRecords <= 0) {
     throw new Error('LIMIT_MAX_RECORDS must be a positive integer.');
   }
 
-  if (isNaN(config.limits.maxExportSizeMb) || config.limits.maxExportSizeMb <= 0) {
+  if (!Number.isSafeInteger(config.limits.maxExportSizeMb) || config.limits.maxExportSizeMb <= 0) {
     throw new Error('LIMIT_MAX_EXPORT_SIZE_MB must be a positive integer.');
   }
 }

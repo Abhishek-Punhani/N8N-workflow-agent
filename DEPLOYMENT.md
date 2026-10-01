@@ -1,126 +1,48 @@
-# AI Data Intelligence Platform - Deployment Guide
+# Deployment and operations
 
-This guide covers the installation, setup process, and troubleshooting procedures for the AI Data Intelligence Platform across various environments (local development, Docker Compose, and Kubernetes).
+## Local Docker deployment
 
-## 1. Prerequisites
+Requires Docker Engine and Compose v2. Copy `.env.example` to `.env`, supply a Gemini key, and generate independent random values for `PLATFORM_API_TOKEN`, `DB_PASSWORD`, and `N8N_ENCRYPTION_KEY` (for example `openssl rand -hex 32`). Configure an owner email and strong password for n8n.
 
-- **Docker & Docker Compose** (for local containerized deployment)
-- **Node.js 20+** (for bare-metal development)
-- **Kubernetes Cluster** (for production deployment, e.g., EKS, GKE, or minikube)
-- API Keys:
-  - OpenAI API Key (or compatible LLM endpoint)
-  - n8n API Key (Generated from your n8n instance)
-
-## 2. Environment Configuration
-
-The platform relies strictly on environment variables for configuration. Create a `.env` file at the root of the project:
-
-```env
-NODE_ENV=development
-
-# LLM Configuration
-LLM_API_KEY=your_openai_api_key
-LLM_ENDPOINT=https://api.openai.com/v1
-LLM_MODEL=gpt-4o
-
-# n8n Configuration
-N8N_BASE_URL=http://localhost:5678
-N8N_API_KEY=your_n8n_api_key
-
-# Limits
-LIMIT_MAX_RECORDS=1000000
-LIMIT_MAX_EXPORT_SIZE_MB=500
+```sh
+docker compose config --quiet
+docker compose up -d --build --wait
+docker compose ps
 ```
 
-## 3. Local Docker Compose Deployment (Recommended for Testing)
+Dashboard: http://localhost:8080. Its sign-in key is `PLATFORM_API_TOKEN`. n8n editor: http://localhost:5678, using the configured owner account. Keep `.env` mode 600 and do not paste it into issues or build logs.
 
-The easiest way to stand up the full stack (Platform, n8n, PostgreSQL) is via Docker Compose.
+The bootstrap service uses the n8n owner credentials to provision a scoped API key, stores it in a private Docker volume and reuses it on restart. It stops on provisioning errors. The current key lifetime is one year; rotate before expiry. The bootstrap uses n8n's internal owner/API-key management routes; this is version-dependent, so n8n is pinned to 2.41.4. Upgrades require rerunning the full-stack test. Do not point the bootstrap at an unrelated n8n instance.
 
-```bash
-# Build and start the platform in detached mode
-docker-compose up -d --build
+PostgreSQL and the platform listen only on the Compose network. The dashboard and n8n editor bind to loopback by default. Container builds exclude `.env`, caches and local dependencies, and application containers run as non-root. Never run `docker compose down -v` against data you need.
 
-# View logs
-docker-compose logs -f platform
-```
+## External deployment gate
 
-### Accessing Services:
-- **Platform Health Check:** `http://localhost:3000/health`
-- **n8n Dashboard:** `http://localhost:5678`
-- **PostgreSQL:** `localhost:5432`
+This repository does **not** yet satisfy every requirement in the original design. Read [READINESS.md](reports/READINESS.md) before treating it as a public service. The supported use case is a private, single-workspace JSON collection application.
 
-## 4. Kubernetes Production Deployment
+Before making it public:
 
-For production, we recommend deploying to Kubernetes. Example manifests are provided in the `kubernetes/` directory.
+- Terminate TLS at a trusted ingress/reverse proxy. Set `COOKIE_SECURE=true` and `N8N_SECURE_COOKIE=true` when the corresponding browser endpoint uses HTTPS. Publish only the dashboard; restrict the n8n editor to administrators.
+- Put secrets in your deployment secret manager and replace local passwords/tokens. Preserve the n8n encryption key across upgrades and restores.
+- Add user identities, authorization/tenant isolation and audit logging before offering separate customer workspaces. Current authentication grants access to the entire workspace.
+- Use managed PostgreSQL or establish encrypted backups and test restore procedures. Configure external DB TLS if deployed outside the private Docker network; the included local pool is not a managed-database TLS configuration.
+- Test the expected load and set container memory/CPU and export disk quotas. The one-million-record/500-MB export limits are enforcement ceilings, not demonstrated capacity. Acquisition is limited to 10 MB per source.
+- Pin all base image digests in your release pipeline, scan images, and validate the Gemini model's availability and quota for your account.
 
-### Step 1: Create Namespace and Secrets
-```bash
-kubectl create namespace ai-data
+Kubernetes files are deployment templates, **not a validated cluster deployment**. No changes have been made to the existing local Kubernetes clusters. They need your image registry, ingress/TLS, secret management, storage class, resource sizing and real cluster validation. Compose is the tested path.
 
-# Create your secrets
-kubectl create secret generic ai-platform-secrets \
-  --namespace ai-data \
-  --from-literal=LLM_API_KEY="your-llm-key" \
-  --from-literal=N8N_API_KEY="your-n8n-key" \
-  --from-literal=DB_PASSWORD="your-secure-db-password"
-```
+## Health, recovery and diagnostics
 
-### Step 2: Apply Manifests
-```bash
-kubectl apply -f kubernetes/postgres.yaml
-kubectl apply -f kubernetes/n8n.yaml
-kubectl apply -f kubernetes/platform.yaml
-```
+- `/api/health`: process liveness; `/api/ready`: PostgreSQL and n8n readiness (no billable Gemini request).
+- `docker compose logs --tail=100 platform n8n-bootstrapper`: startup and provisioning. Logs do not print secrets or prompts.
+- Gemini HTTP 401/403: check key access. HTTP 429: quota/rate limit; no fallback. Gemini 5xx gets at most three attempts on the configured model, within the request timeout.
+- Unsupported source: supply a direct HTTPS JSON array endpoint. Redirects, private addresses, HTML, embedded URL credentials and nonstandard ports are rejected.
+- Failed jobs retain the stage/error and zero published records. Jobs are durably queued. Stale running jobs are marked failed after ten minutes without progress instead of being silently replayed. Inspect n8n before retrying an interrupted job.
+- Trial workflows are removed after the trial. Full workflows are retained but deactivated after execution. Do not expose their webhook routes to the internet.
+- Exports are written to a private temporary directory, size-checked, streamed and deleted. CSV cells are escaped and formula-prefixed values are neutralized.
 
-### Step 3: Verify Deployment
-```bash
-kubectl get pods -n ai-data
-kubectl logs -f deployment/ai-platform -n ai-data
-```
+## Backups and upgrades
 
-## 5. API Documentation
+Back up PostgreSQL using your backup system and store an encrypted copy of the n8n encryption key. The database contains prompts, plans, execution metadata, records and n8n state. Do not write database dumps into the repository. A backup is only proven after a restore test.
 
-Currently, the primary entry point for health monitoring is exposed on the HTTP server:
-
-### GET `/health`
-Returns the status of the platform node.
-**Response (200 OK):**
-```json
-{
-  "status": "ok",
-  "environment": "production",
-  "timestamp": "2026-09-30T10:00:00.000Z"
-}
-```
-
-## 6. Troubleshooting
-
-### Problem: Platform container crashes on startup with `Configuration validation failed`
-**Cause:** Missing required API keys in the environment.
-**Fix:** Ensure `LLM_API_KEY` and `N8N_API_KEY` are provided either via `.env` or Docker/K8s secrets.
-
-### Problem: Workflows fail to deploy to n8n
-**Cause:** The `N8N_BASE_URL` is unreachable or the API key is incorrect.
-**Fix:** If running in Docker Compose, ensure `N8N_BASE_URL=http://n8n:5678`. Ensure the n8n container is fully booted and healthy before the platform attempts to deploy.
-
-### Problem: Database connection timeouts
-**Cause:** Postgres container is taking too long to initialize.
-**Fix:** The Docker Compose file includes a `depends_on: condition: service_healthy` block which mitigates this. Ensure your local Docker daemon supports health checks.
-
-## 7. Example Prompts & Expected Workflows
-
-When the orchestration pipeline is running, here are examples of what you can ask the Intake Agent:
-
-**Prompt:** "Extract recent tech news from HackerNews and persist it to our analytics Postgres database."
-**Expected Workflow:**
-1. `Discover` (Scrape HackerNews RSS)
-2. `Extract` (Parse titles and links)
-3. `Transform` (Normalize JSON structure)
-4. `Persist` (Write to PostgreSQL node)
-
-**Prompt:** "Monitor my support inbox and alert me in Slack if a high-priority customer is angry."
-**Expected Workflow:**
-1. `Acquire` (IMAP/Gmail Trigger)
-2. `Enrich` (LLM node to determine sentiment/priority)
-3. `Filter` (Condition node: Priority == HIGH && Sentiment == ANGRY)
-4. `Deliver` (Slack node)
+Build and run the unit/browser/live-stack suites in a staging environment before rolling an image or n8n version into service. During shutdown the API stops accepting work and gives its current job 25 seconds to finish; interrupted work is retained for reconciliation. n8n caps execution at 120 seconds.

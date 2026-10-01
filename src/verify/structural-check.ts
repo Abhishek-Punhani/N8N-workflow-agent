@@ -235,9 +235,10 @@ export class StructuralCheck {
       // Skip if either step is missing (already reported in checkConnectionValidity)
       if (!fromStep || !toStep) continue;
 
+      // main is the execution port, not a record field. Named field references are checked below.
       // Validate from_output against upstream output_schema
       const outputProps = fromStep.output_schema?.properties;
-      if (outputProps && Object.keys(outputProps).length > 0) {
+      if (conn.from_output !== 'main' && outputProps && Object.keys(outputProps).length > 0) {
         if (!Object.prototype.hasOwnProperty.call(outputProps, conn.from_output)) {
           errors.push(
             this.makeError(
@@ -253,7 +254,7 @@ export class StructuralCheck {
 
       // Validate to_input against downstream input_schema
       const inputProps = toStep.input_schema?.properties;
-      if (inputProps && Object.keys(inputProps).length > 0) {
+      if (conn.to_input !== 'main' && inputProps && Object.keys(inputProps).length > 0) {
         if (!Object.prototype.hasOwnProperty.call(inputProps, conn.to_input)) {
           errors.push(
             this.makeError(

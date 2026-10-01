@@ -110,7 +110,7 @@ export class Sandbox {
         reject(new SandboxTimeoutError(`Sandbox execution timed out after ${timeoutMs}ms`));
       }, timeoutMs);
 
-      fn().then(
+      Promise.resolve().then(fn).then(
         result => {
           clearTimeout(timer);
           resolve(result);

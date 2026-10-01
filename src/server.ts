@@ -1,166 +1,38 @@
-import * as http from 'http';
+import { readFile } from 'node:fs/promises';
 import { config, validateConfig } from './config/env.js';
-import type { IncomingMessage, ServerResponse } from 'http';
+import { Store } from './service/store.js';
+import { createApi } from './service/http.js';
+import { runJob } from './service/pipeline.js';
 
-/**
- * Minimal structured logger for the platform server.
- * In production this should be replaced with a full-featured logger (e.g. pino, winston).
- */
-const logger = {
-  info: (msg: string) => process.stdout.write(`[INFO]  ${new Date().toISOString()} ${msg}\n`),
-  error: (msg: string, err?: unknown) => {
-    process.stderr.write(`[ERROR] ${new Date().toISOString()} ${msg}\n`);
-    if (err instanceof Error) {
-      process.stderr.write(`        ${err.stack ?? err.message}\n`);
-    }
-  },
-};
-
-// Validate configuration strictly on boot — abort immediately if misconfigured
-try {
+async function main(): Promise<void> {
+  if (process.env.N8N_API_KEY_FILE) config.n8n.apiKey = (await readFile(process.env.N8N_API_KEY_FILE, 'utf8')).trim();
   validateConfig(config);
-  logger.info(`Configuration validated for environment: ${config.env}`);
-} catch (error) {
-  logger.error('Failed to start platform: configuration invalid.', error);
-  process.exit(1);
-}
-
-const PORT = process.env.PORT ?? 3000;
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper utilities
-// ─────────────────────────────────────────────────────────────────────────────
-
-function sendJson(res: ServerResponse, statusCode: number, body: unknown): void {
-  const payload = JSON.stringify(body);
-  res.writeHead(statusCode, {
-    'Content-Type': 'application/json',
-    'Content-Length': Buffer.byteLength(payload),
-    'Access-Control-Allow-Origin': '*',
-  });
-  res.end(payload);
-}
-
-function parseRoute(url: string): { path: string; segments: string[] } {
-  const path = url.split('?')[0] ?? url;
-  const segments = path.split('/').filter(Boolean);
-  return { path, segments };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Route handlers
-// ─────────────────────────────────────────────────────────────────────────────
-
-function handleHealth(res: ServerResponse): void {
-  sendJson(res, 200, {
-    status: 'ok',
-    environment: config.env,
-    timestamp: new Date().toISOString(),
-  });
-}
-
-function handleDashboard(res: ServerResponse): void {
-  // In a full implementation this would query the InMemoryRepository / database.
-  // Returns the Status API payload consumed by the dashboard frontend.
-  sendJson(res, 200, {
-    verification_stages: [],
-    execution_results: [],
-    export_options: {
-      available_formats: ['csv', 'json'],
-      max_records: config.limits.maxRecords,
-      max_size_mb: config.limits.maxExportSizeMb,
-    },
-    degraded_sources: [],
-  });
-}
-
-function handleExecutionExport(
-  res: ServerResponse,
-  executionId: string,
-  req: IncomingMessage
-): void {
-  let body = '';
-  req.on('data', (chunk: Buffer) => {
-    body += chunk.toString();
-  });
-  req.on('end', () => {
-    let format = 'json';
-    try {
-      const parsed = JSON.parse(body) as { format?: string };
-      format = parsed.format ?? 'json';
-    } catch {
-      // default to json if body is malformed
+  const token = process.env.PLATFORM_API_TOKEN ?? '';
+  const port = Number(process.env.PORT ?? 3000);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid PORT');
+  const store = new Store();
+  await store.init();
+  const server = createApi(store, config, token);
+  server.requestTimeout = 15000; server.headersTimeout = 10000;
+  server.listen(port, '0.0.0.0', () => process.stdout.write(`Platform listening on ${port}; model=${config.llm.model}\n`));
+  let stopping = false;
+  const worker = (async () => {
+    while (!stopping) {
+      try {
+        await store.reconcile();
+        const job = await store.claim();
+        if (job) { await runJob(store, job, config); continue; }
+      } catch { process.stderr.write('Worker iteration failed; retrying\n'); }
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
-
-    if (format !== 'csv' && format !== 'json') {
-      sendJson(res, 400, { error: 'Invalid format. Must be "csv" or "json".' });
-      return;
-    }
-
-    sendJson(res, 200, {
-      download_url: `/api/executions/${executionId}/download?format=${format}`,
-      expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-    });
-  });
+  })();
+  const stop = () => {
+    if (stopping) return;
+    stopping = true;
+    server.close();
+    const timer = setTimeout(() => process.exit(1), 25000); timer.unref();
+    void worker.then(() => store.pool.end()).then(() => { clearTimeout(timer); process.exit(0); });
+  };
+  process.once('SIGTERM', stop); process.once('SIGINT', stop);
 }
-
-function handleNotFound(res: ServerResponse): void {
-  sendJson(res, 404, { error: 'Not Found' });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Server
-// ─────────────────────────────────────────────────────────────────────────────
-
-const server = http.createServer((req, res) => {
-  const { path, segments } = parseRoute(req.url ?? '/');
-  const method = req.method ?? 'GET';
-
-  logger.info(`${method} ${path}`);
-
-  // GET /health
-  if (method === 'GET' && path === '/health') {
-    return handleHealth(res);
-  }
-
-  // GET /dashboard  ← consumed by the dashboard frontend via Vite proxy /api/dashboard
-  if (method === 'GET' && path === '/dashboard') {
-    return handleDashboard(res);
-  }
-
-  // POST /executions/:id/export
-  if (
-    method === 'POST' &&
-    segments.length === 3 &&
-    segments[0] === 'executions' &&
-    segments[2] === 'export'
-  ) {
-    const executionId = segments[1] ?? 'unknown';
-    return handleExecutionExport(res, executionId, req);
-  }
-
-  // OPTIONS preflight (CORS)
-  if (method === 'OPTIONS') {
-    res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    });
-    return res.end();
-  }
-
-  return handleNotFound(res);
-});
-
-server.listen(PORT, () => {
-  logger.info(`AI Data Intelligence Platform running on port ${PORT}`);
-});
-
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received. Shutting down gracefully...');
-  server.close(() => process.exit(0));
-});
-
-process.on('SIGINT', () => {
-  logger.info('SIGINT received. Shutting down gracefully...');
-  server.close(() => process.exit(0));
-});
+void main().catch((error: unknown) => { process.stderr.write(`Startup failed: ${error instanceof Error ? error.message : 'unknown error'}\n`); process.exit(1); });

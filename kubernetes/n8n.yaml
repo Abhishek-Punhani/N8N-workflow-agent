@@ -6,6 +6,8 @@ metadata:
   labels:
     app: n8n
 spec:
+  strategy:
+    type: Recreate
   replicas: 1
   selector:
     matchLabels:
@@ -17,10 +19,37 @@ spec:
     spec:
       containers:
         - name: n8n
-          image: docker.n8n.io/n8nio/n8n:latest
+          image: docker.n8n.io/n8nio/n8n:2.41.4
           ports:
             - containerPort: 5678
+          readinessProbe:
+            httpGet: { path: /healthz/readiness, port: 5678 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "500m", memory: "512Mi" }
+            limits: { cpu: "2", memory: "2Gi" }
           env:
+            - name: DB_TYPE
+              value: postgresdb
+            - name: DB_POSTGRESDB_HOST
+              value: postgres-service
+            - name: DB_POSTGRESDB_DATABASE
+              value: ai_data_db
+            - name: DB_POSTGRESDB_USER
+              value: ai_platform
+            - name: DB_POSTGRESDB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: ai-platform-secrets, key: DB_PASSWORD }
+            - name: N8N_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef: { name: ai-platform-secrets, key: N8N_ENCRYPTION_KEY }
+            - name: N8N_BLOCK_ENV_ACCESS_IN_NODE
+              value: "true"
+            - name: N8N_DIAGNOSTICS_ENABLED
+              value: "false"
+            - name: EXECUTIONS_TIMEOUT
+              value: "120"
             - name: N8N_HOST
               value: "n8n-service.ai-data.svc.cluster.local"
             - name: N8N_PORT

@@ -6,8 +6,10 @@ metadata:
 data:
   NODE_ENV: "production"
   N8N_BASE_URL: "http://n8n-service.ai-data.svc.cluster.local:5678"
-  LLM_ENDPOINT: "https://api.openai.com/v1"
-  LLM_MODEL: "gpt-4o"
+  GEMINI_MODEL: "gemini-3-flash-preview"
+  COOKIE_SECURE: "true"
+  TIMEOUT_LLM_MS: "120000"
+  TIMEOUT_N8N_MS: "120000"
   DB_HOST: "postgres-service.ai-data.svc.cluster.local"
   DB_NAME: "ai_data_db"
   DB_USER: "ai_platform"
@@ -22,7 +24,7 @@ metadata:
   labels:
     app: ai-platform
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: ai-platform
@@ -33,8 +35,15 @@ spec:
     spec:
       containers:
         - name: platform
-          image: ai-data-intelligence-platform:latest
+          image: ai-data-intelligence-platform:1.0.0
           imagePullPolicy: IfNotPresent
+          resources:
+            requests: { cpu: "250m", memory: "256Mi" }
+            limits: { cpu: "1", memory: "1Gi" }
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
           ports:
             - containerPort: 3000
           envFrom:
@@ -50,7 +59,7 @@ spec:
             periodSeconds: 20
           readinessProbe:
             httpGet:
-              path: /health
+              path: /ready
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 10

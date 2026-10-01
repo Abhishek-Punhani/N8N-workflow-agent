@@ -209,7 +209,9 @@ RULES:
 3. Set clarification_needed when the prompt is genuinely ambiguous or incomplete
 4. Set interpretation_confidence based on how clear the request is
 5. Document assumptions when you choose one interpretation over another
-6. NEVER invent data — only extract what is in the prompt`;
+6. NEVER invent data — only extract what is in the prompt
+7. Put record counts ONLY in output_requirements.max_records, not in constraints. Constraints are row field predicates.
+8. A supplied JSON API URL and explicit fields are sufficient; do not request clarification about obvious field meanings.`;
   }
 
   /**

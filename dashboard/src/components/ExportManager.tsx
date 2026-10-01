@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
+import { triggerExport } from '../api';
 import type { ExportOptions } from '../types';
 import { Download, FileJson, FileSpreadsheet } from 'lucide-react';
 
 interface Props {
   options: ExportOptions;
+  executionId?: string;
 }
 
-export const ExportManager: React.FC<Props> = ({ options }) => {
+export const ExportManager: React.FC<Props> = ({ options, executionId }) => {
   const [format, setFormat] = useState<'csv' | 'json'>('json');
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleExport = () => {
-    setIsExporting(true);
-    setTimeout(() => {
-      setIsExporting(false);
-      alert(`Exported in ${format.toUpperCase()} format successfully!`);
-    }, 1500);
+  const [error, setError] = useState('');
+  const handleExport = async () => {
+    if (!executionId) return;
+    setIsExporting(true); setError('');
+    try {
+      const { download_url } = await triggerExport(executionId, format);
+      window.location.assign(download_url);
+    } catch (err) { setError(err instanceof Error ? err.message : 'Export failed'); }
+    finally { setIsExporting(false); }
   };
 
   return (
@@ -24,6 +29,7 @@ export const ExportManager: React.FC<Props> = ({ options }) => {
         <Download className="w-5 h-5 mr-2" />
         Data Export
       </h2>
+      {error && <p role="alert">{error}</p>}
       <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
         <div className="flex items-center space-x-4">
           <label className="text-sm font-medium text-gray-700">Format:</label>
@@ -56,8 +62,8 @@ export const ExportManager: React.FC<Props> = ({ options }) => {
         </div>
 
         <button
-          onClick={handleExport}
-          disabled={isExporting}
+          onClick={() => void handleExport()}
+          disabled={isExporting || !executionId}
           className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-4 py-2 rounded-md font-medium flex items-center justify-center transition-colors shadow-sm"
         >
           {isExporting ? 'Exporting...' : 'Start Export'}
