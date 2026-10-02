@@ -12,6 +12,7 @@ export const fetchDashboardData = () => request<DashboardView>('/dashboard');
 export const fetchExecutionDetails = (id: string) => request<ExecutionResult>(`/executions/${encodeURIComponent(id)}`);
 export const signIn = (token: string) => request('/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) });
 export const signOut = () => request('/session', { method: 'DELETE' });
+export const retryExecution = (id: string) => request<ExecutionResult>(`/executions/${encodeURIComponent(id)}/retry`, { method: 'POST' });
 export const submitPrompt = (prompt: string) => request<ExecutionResult>('/prompts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
 export const fetchRecords = (id: string, offset = 0) => request<RecordInspection>(`/executions/${encodeURIComponent(id)}/records?limit=25&offset=${offset}`);
 export const triggerExport = (id: string, format: 'csv' | 'json') => request<{ download_url: string }>(`/executions/${encodeURIComponent(id)}/export`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ format }) });

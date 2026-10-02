@@ -24,6 +24,16 @@ export interface ExecutionStatus {
 }
 
 export interface ExecutionResult {
+  collection?: {
+    phase: string;
+    pages_visited: number;
+    accepted_records: number;
+    requested_records?: number;
+    coverage: string;
+    stop_reason?: string;
+    sources: Array<{ url: string; state: string; records: number; message?: string }>;
+    warnings: string[];
+  };
   prompt?: string;
   execution_id: string;
   workflow_id: string | null;

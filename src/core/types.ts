@@ -228,6 +228,7 @@ export interface OutputRequirements {
 export interface StructuredObjective {
   id?: string;
   target_entity: string;
+  qualification_requirements?: string[];
   constraints: Constraint[];
   required_fields: FieldDefinition[];
   data_sources?: DataSourceHint[];

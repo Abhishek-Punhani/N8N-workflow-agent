@@ -1,5 +1,18 @@
 name: data-intelligence
 services:
+  search:
+    image: searxng/searxng@sha256:d4c2726944b38e71434ee31cb95047f5acf8acae9a06f7ad586b28cc9d4ebfd1
+    restart: unless-stopped
+    environment:
+      SEARXNG_SECRET: ${SEARCH_SECRET:?Set SEARCH_SECRET in .env}
+    volumes:
+      - ./docker/searxng/settings.yml:/etc/searxng/settings.yml:ro
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    security_opt: [no-new-privileges:true]
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
@@ -65,6 +78,7 @@ services:
     build: .
     restart: unless-stopped
     init: true
+    mem_limit: 1g
     ports:
       - '127.0.0.1:${PLATFORM_PORT:-3000}:3000'
     environment:
@@ -87,7 +101,14 @@ services:
       TIMEOUT_N8N_MS: ${TIMEOUT_N8N_MS:-120000}
       LIMIT_MAX_RECORDS: ${LIMIT_MAX_RECORDS:-1000000}
       LIMIT_MAX_EXPORT_SIZE_MB: ${LIMIT_MAX_EXPORT_SIZE_MB:-500}
-      LIMIT_WEB_PAGES: ${LIMIT_WEB_PAGES:-80}
+      LIMIT_WEB_PAGES: ${LIMIT_WEB_PAGES:-30}
+      SEARCH_PROVIDER: ${SEARCH_PROVIDER:-searxng}
+      SEARCH_BASE_URL: ${SEARCH_BASE_URL:-http://search:8080}
+      SEARCH_API_KEY: ${SEARCH_API_KEY:-}
+      LIMIT_COLLECTION_RECORDS: ${LIMIT_COLLECTION_RECORDS:-500}
+      LIMIT_COLLECTION_MODEL_CALLS: ${LIMIT_COLLECTION_MODEL_CALLS:-40}
+      TIMEOUT_COLLECTION_MS: ${TIMEOUT_COLLECTION_MS:-300000}
+      COLLECTION_BROWSER_ENABLED: ${COLLECTION_BROWSER_ENABLED:-true}
     volumes:
       - shared_env:/shared:ro
     depends_on:
@@ -95,6 +116,8 @@ services:
         condition: service_healthy
       n8n-bootstrapper:
         condition: service_completed_successfully
+      search:
+        condition: service_healthy
     security_opt: [no-new-privileges:true]
 
   dashboard:

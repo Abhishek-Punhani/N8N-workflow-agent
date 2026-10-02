@@ -11,6 +11,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
+RUN apk add --no-cache chromium
+ENV CHROMIUM_PATH=/usr/bin/chromium
 COPY --from=builder /app/dist ./dist
 USER node
 EXPOSE 3000

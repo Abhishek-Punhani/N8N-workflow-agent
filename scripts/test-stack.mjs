@@ -21,7 +21,7 @@ await api('/prompts', { method: 'POST', body: JSON.stringify({prompt:'x'.repeat(
 await api('/executions/00000000-0000-0000-0000-000000000000', {}, 404);
 const prompt = process.env.E2E_PROMPT ?? 'From https://jsonplaceholder.typicode.com/users collect all users with id, name and email. Return JSON.';
 const submitted = await (await api('/prompts', { method: 'POST', body: JSON.stringify({ prompt }) }, 202)).json();
-console.log(`Live Gemini → n8n run submitted: ${submitted.execution_id}`);
+console.log(`Live collection → n8n run submitted: ${submitted.execution_id}`);
 let job;
 const deadline = Date.now() + 300000;
 while (Date.now() < deadline) {
@@ -49,4 +49,4 @@ for (const format of ['csv','json']) {
   else { assert.ok(content.includes('source_url')); assert.equal(content.split('\r\n').length, job.records_processed + 2); }
 }
 await writeFile('/tmp/forma-verified-job.json', JSON.stringify({id:job.execution_id,records:job.records_processed,workflow:job.workflow_id}));
-console.log(`PASS: authentication, input validation, Gemini planning, n8n sandbox/execution, ${job.records_processed} persisted records, pagination, CSV and JSON exports`);
+console.log(`PASS: authentication, input validation, live collection, n8n sandbox/execution, ${job.records_processed} persisted records, pagination, CSV and JSON exports`);

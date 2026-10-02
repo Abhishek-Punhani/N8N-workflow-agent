@@ -15,6 +15,7 @@
     "format:check": "prettier --check \"src/**/*.ts\"",
     "check": "npm run lint && npm run format:check && npm run build",
     "test:stack": "node scripts/test-stack.mjs",
+    "test:collection": "node scripts/test-general-collection.mjs",
     "test:browser": "playwright test"
   },
   "jest": {
@@ -95,7 +96,10 @@
     "node": ">=22"
   },
   "dependencies": {
+    "cheerio": "1.2.0",
     "dotenv": "18.0.4",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "playwright-core": "1.63.0",
+    "robots-parser": "3.0.1"
   }
 }

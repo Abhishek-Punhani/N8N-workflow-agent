@@ -1,0 +1,137 @@
+{
+  "job": {
+    "prompt": "From https://books.toscrape.com/ collect 2 books with fields title and price. Return JSON.",
+    "status": "completed",
+    "collection": {
+      "phase": "finished",
+      "queries": [],
+      "sources": [
+        {
+          "url": "https://books.toscrape.com/",
+          "state": "available",
+          "records": 2
+        }
+      ],
+      "coverage": "requested_count_reached",
+      "warnings": [],
+      "model_calls": 2,
+      "stop_reason": "requested_count_reached",
+      "pages_visited": 1,
+      "accepted_records": 2,
+      "rejected_records": 0,
+      "requested_records": 2
+    },
+    "started_at": "2026-10-02T14:24:49.035Z",
+    "duration_ms": 5553,
+    "workflow_id": "i8bRswu1KcbsJk3o",
+    "completed_at": "2026-10-02T14:24:54.588Z",
+    "execution_id": "71f3576b-4247-4028-8acd-ad31e10791a1",
+    "records_processed": 2,
+    "verification_stages": [
+      {
+        "status": "success",
+        "timestamp": "2026-10-02T14:24:50.677Z",
+        "stage_name": "Intake"
+      },
+      {
+        "status": "success",
+        "message": "finished: 1 pages, 2 accepted records",
+        "timestamp": "2026-10-02T14:24:53.546Z",
+        "stage_name": "Plan"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-02T14:24:53.548Z",
+        "stage_name": "Structure"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-02T14:24:53.550Z",
+        "stage_name": "Compile"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-02T14:24:53.552Z",
+        "stage_name": "Contract"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-02T14:24:54.217Z",
+        "stage_name": "Sandbox"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-02T14:24:54.587Z",
+        "stage_name": "Run"
+      }
+    ]
+  },
+  "records": [
+    {
+      "price": 51.77,
+      "title": "A Light in the Attic",
+      "_provenance": {
+        "source_url": "https://books.toscrape.com/",
+        "dedupe_group": "e44ac0855ec55be1e3ba92951d39a0649a1c291b95802fa750d0aee3c65e8ec0",
+        "field_evidence": {
+          "price": {
+            "quote": "£51.77",
+            "method": "html",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-02T14:24:53.525Z"
+          },
+          "title": {
+            "quote": "Observed link: A Light in the Attic https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html",
+            "method": "html",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-02T14:24:53.525Z"
+          }
+        },
+        "confidence_method": "not_calibrated",
+        "validation_status": "valid",
+        "extraction_confidence": null,
+        "qualification_evidence": [
+          {
+            "quote": "A Light in the ... £51.77 In stock Add to basket",
+            "method": "html",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-02T14:24:53.525Z"
+          }
+        ]
+      }
+    },
+    {
+      "price": 53.74,
+      "title": "Tipping the Velvet",
+      "_provenance": {
+        "source_url": "https://books.toscrape.com/",
+        "dedupe_group": "2ef9bcfe7edb48939dc23768cd1a514d591da07de44681573a11530ede87b178",
+        "field_evidence": {
+          "price": {
+            "quote": "£53.74",
+            "method": "html",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-02T14:24:53.525Z"
+          },
+          "title": {
+            "quote": "Observed link: Tipping the Velvet https://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html",
+            "method": "html",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-02T14:24:53.525Z"
+          }
+        },
+        "confidence_method": "not_calibrated",
+        "validation_status": "valid",
+        "extraction_confidence": null,
+        "qualification_evidence": [
+          {
+            "quote": "Tipping the Velvet £53.74 In stock Add to basket",
+            "method": "html",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-02T14:24:53.525Z"
+          }
+        ]
+      }
+    }
+  ]
+}

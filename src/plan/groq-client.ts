@@ -12,7 +12,12 @@ export class GroqLLMClient implements LLMClient {
     if (!this.modelName) throw new Error('GROQ_MODEL is required when using Groq');
   }
 
-  async complete(systemPrompt: string, userMessage: string, signal: AbortSignal): Promise<string> {
+  async complete(
+    systemPrompt: string,
+    userMessage: string,
+    signal: AbortSignal,
+    options?: { maxOutputTokens?: number }
+  ): Promise<string> {
     signal.throwIfAborted();
     let response!: Response;
     for (let attempt = 0; attempt < 3; attempt++) {
@@ -20,35 +25,49 @@ export class GroqLLMClient implements LLMClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          Authorization: `Bearer ${this.apiKey}`,
         },
         signal,
         body: JSON.stringify({
           model: this.modelName,
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: userMessage }
+            { role: 'user', content: userMessage },
           ],
           temperature: 0.1,
-          max_completion_tokens: 4000,
-          response_format: { type: 'json_object' }
+          max_completion_tokens: options?.maxOutputTokens ?? 4000,
+          response_format: { type: 'json_object' },
         }),
       });
-      if (response.status < 500 || attempt === 2) break;
+      if ((response.status < 500 && response.status !== 429) || attempt === 2) break;
+      const retry = Number(response.headers.get('retry-after'));
       await response.body?.cancel();
-      await delay(1000 * 2 ** attempt, undefined, { signal });
+      await delay(
+        response.status === 429
+          ? Math.min(
+              60000,
+              Math.max(1000, Number.isFinite(retry) && retry > 0 ? retry * 1000 : 15000)
+            )
+          : 1000 * 2 ** attempt,
+        undefined,
+        { signal }
+      );
     }
-    
-    if (!response.ok) throw new Error(`Groq request failed (HTTP ${response.status}, model ${this.modelName})`);
-    
-    const body = await response.json() as { choices?: Array<{ finish_reason?: string; message?: { content?: string } }> };
+
+    if (!response.ok)
+      throw new Error(`Groq request failed (HTTP ${response.status}, model ${this.modelName})`);
+
+    const body = (await response.json()) as {
+      choices?: Array<{ finish_reason?: string; message?: { content?: string } }>;
+    };
     const choice = body.choices?.[0];
-    
-    if (choice?.finish_reason !== 'stop') throw new Error(`Groq did not complete: ${choice?.finish_reason ?? 'no choice'}`);
-    
+
+    if (choice?.finish_reason !== 'stop')
+      throw new Error(`Groq did not complete: ${choice?.finish_reason ?? 'no choice'}`);
+
     const text = choice.message?.content?.trim() ?? '';
     if (!text) throw new Error('Groq returned an empty response');
-    
+
     // Ensure it parses successfully
     JSON.parse(text);
     return text;

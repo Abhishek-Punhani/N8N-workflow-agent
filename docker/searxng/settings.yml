@@ -1,0 +1,27 @@
+use_default_settings:
+  engines:
+    keep_only:
+      - bing
+      - brave
+      - duckduckgo
+      - google
+server:
+  # Only reachable on the Compose network; override with the runtime secret.
+  secret_key: ""
+  limiter: false
+  image_proxy: false
+search:
+  formats:
+    - json
+    - html
+outgoing:
+  request_timeout: 10
+engines:
+  - name: bing
+    disabled: false
+  - name: google
+    disabled: false
+  - name: brave
+    disabled: false
+  - name: duckduckgo
+    disabled: false

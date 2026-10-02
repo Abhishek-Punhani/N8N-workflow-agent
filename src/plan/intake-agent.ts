@@ -55,7 +55,12 @@ export interface LLMClient {
    * @param signal        AbortSignal for timeout enforcement.
    * @returns             Raw string response from the model (must be valid JSON).
    */
-  complete(systemPrompt: string, userMessage: string, signal: AbortSignal): Promise<string>;
+  complete(
+    systemPrompt: string,
+    userMessage: string,
+    signal: AbortSignal,
+    options?: { maxOutputTokens?: number }
+  ): Promise<string>;
 }
 
 // ============================================================================
@@ -75,6 +80,7 @@ export interface IntakeAgentConfig {
 
 interface RawLLMResponse {
   target_entity?: unknown;
+  qualification_requirements?: unknown;
   constraints?: unknown;
   required_fields?: unknown;
   data_sources?: unknown;
@@ -170,6 +176,7 @@ export class IntakeAgent {
 OUTPUT SCHEMA (respond with ONLY valid JSON, no markdown, no explanation):
 {
   "target_entity": string,          // Main entity to collect data about
+  "qualification_requirements": string[], // Entity/geographic conditions requiring page evidence
   "constraints": [                  // Filtering constraints
     {
       "field": string,
@@ -211,7 +218,9 @@ RULES:
 5. Document assumptions when you choose one interpretation over another
 6. NEVER invent data — only extract what is in the prompt
 7. Put record counts ONLY in output_requirements.max_records, not in constraints. Constraints are row field predicates.
-8. A supplied JSON API URL and explicit fields are sufficient; do not request clarification about obvious field meanings.`;
+8. A supplied JSON API URL and explicit fields are sufficient; do not request clarification about obvious field meanings.
+9. Put semantic entity/geographic conditions (for example sells TVs, located in Pune India) in qualification_requirements. Do not invent hidden location.city, location.country or category predicates when these are not requested output fields. Constraints are explicit row-field predicates (for example userId equals 1 or price less than 500). Preserve every semantic qualification as a requirement needing source evidence.
+10. Evidence/provenance is platform metadata. Do not add a source_evidence dataset field unless the user explicitly requests that named field. Business phone numbers are strings, never numeric quantities.`;
   }
 
   /**
@@ -273,6 +282,17 @@ RULES:
       required_fields: this.parseRequiredFields(parsed.required_fields),
       data_sources: this.parseDataSources(parsed.data_sources),
       output_requirements: this.parseOutputRequirements(parsed.output_requirements),
+      ...(Array.isArray(parsed.qualification_requirements) &&
+      parsed.qualification_requirements.length
+        ? {
+            qualification_requirements: parsed.qualification_requirements
+              .filter(
+                (requirement): requirement is string =>
+                  typeof requirement === 'string' && requirement.trim().length > 0
+              )
+              .slice(0, 12),
+          }
+        : {}),
     };
 
     const interpretation_confidence = this.parseConfidence(parsed.interpretation_confidence);

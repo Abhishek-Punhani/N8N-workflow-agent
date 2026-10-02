@@ -1,0 +1,181 @@
+{
+  "job": {
+    "prompt": "Find 2 TV retailers physically located in Pune, India. Return name, full street address and publicly listed business phone as fields named name, address, phone. Include source evidence. A city name alone is not a street address.",
+    "status": "completed",
+    "collection": {
+      "phase": "finished",
+      "queries": [
+        "TV retailers in Pune India full street address phone number",
+        "electronics stores in Pune India selling TVs contact details",
+        "local TV shops in Pune India business directory address phone"
+      ],
+      "sources": [
+        {
+          "url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+          "state": "available",
+          "records": 2
+        }
+      ],
+      "coverage": "requested_count_reached",
+      "warnings": [],
+      "model_calls": 3,
+      "stop_reason": "requested_count_reached",
+      "pages_visited": 1,
+      "accepted_records": 2,
+      "rejected_records": 0,
+      "requested_records": 2
+    },
+    "started_at": "2026-10-02T14:08:31.281Z",
+    "duration_ms": 8562,
+    "workflow_id": "Corwp7kbCFx9o1RS",
+    "completed_at": "2026-10-02T14:08:39.843Z",
+    "execution_id": "3bf24e6e-cfde-424f-b01e-4daddde3750d",
+    "records_processed": 2,
+    "verification_stages": [
+      {
+        "status": "success",
+        "timestamp": "2026-10-02T14:08:32.733Z",
+        "stage_name": "Intake"
+      },
+      {
+        "status": "success",
+        "message": "finished: 1 pages, 2 accepted records",
+        "timestamp": "2026-10-02T14:08:39.040Z",
+        "stage_name": "Plan"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-02T14:08:39.043Z",
+        "stage_name": "Structure"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-02T14:08:39.045Z",
+        "stage_name": "Compile"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-02T14:08:39.048Z",
+        "stage_name": "Contract"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-02T14:08:39.463Z",
+        "stage_name": "Sandbox"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-02T14:08:39.842Z",
+        "stage_name": "Run"
+      }
+    ]
+  },
+  "records": [
+    {
+      "name": "VIJAY SALES - DHANKAWADI",
+      "phone": "+912066848600",
+      "address": "Satara Road, Sambhaji Nagar, Yashwantrao Chavan Ngr Dhankawadi Pune - 411043",
+      "_provenance": {
+        "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+        "dedupe_group": "ecec36a131c7682d88cd86d8e6a88e1c77e7a94a41b0a59411094299f8d3d982",
+        "field_evidence": {
+          "name": {
+            "quote": "VIJAY SALES - DHANKAWADI",
+            "method": "html",
+            "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+            "retrieved_at": "2026-10-02T14:08:39.028Z"
+          },
+          "phone": {
+            "quote": "+912066848600",
+            "method": "html",
+            "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+            "retrieved_at": "2026-10-02T14:08:39.028Z"
+          },
+          "address": {
+            "quote": "Satara Road, Sambhaji Nagar, Yashwantrao Chavan Ngr Dhankawadi Pune - 411043",
+            "method": "html",
+            "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+            "retrieved_at": "2026-10-02T14:08:39.028Z"
+          },
+          "source_evidence": {
+            "quote": "VIJAY SALES - DHANKAWADI Satara Road, Sambhaji Nagar, Yashwantrao Chavan Ngr Dhankawadi Pune - 411043 Opp Shankar Maharaja Math +912066848600",
+            "method": "html",
+            "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+            "retrieved_at": "2026-10-02T14:08:39.028Z"
+          }
+        },
+        "confidence_method": "not_calibrated",
+        "validation_status": "valid",
+        "extraction_confidence": null,
+        "qualification_evidence": [
+          {
+            "quote": "Dhankawadi Pune - 411043",
+            "method": "html",
+            "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+            "retrieved_at": "2026-10-02T14:08:39.028Z"
+          },
+          {
+            "quote": "TV & Entertainment View Details",
+            "method": "html",
+            "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+            "retrieved_at": "2026-10-02T14:08:39.028Z"
+          }
+        ]
+      },
+      "source_evidence": "VIJAY SALES - DHANKAWADI Satara Road, Sambhaji Nagar, Yashwantrao Chavan Ngr Dhankawadi Pune - 411043 Opp Shankar Maharaja Math +912066848600"
+    },
+    {
+      "name": "VIJAY SALES - S. B. ROAD",
+      "phone": "+912067405700",
+      "address": "Plot No 2, SW 1, Gr Flr, ICC Trade Tower, Senapati Bapat Road, Shivaji Nagar, Pune, Maharashtra",
+      "_provenance": {
+        "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+        "dedupe_group": "f81023f027a36bc00a2cee9f2f1e85f24f58af59efe3590feab015cfdeb2786a",
+        "field_evidence": {
+          "name": {
+            "quote": "VIJAY SALES - S. B. ROAD",
+            "method": "html",
+            "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+            "retrieved_at": "2026-10-02T14:08:39.028Z"
+          },
+          "phone": {
+            "quote": "+912067405700",
+            "method": "html",
+            "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+            "retrieved_at": "2026-10-02T14:08:39.028Z"
+          },
+          "address": {
+            "quote": "Plot No 2, SW 1, Gr Flr, ICC Trade Tower, Senapati Bapat Road, Shivaji Nagar, Pune, Maharashtra",
+            "method": "html",
+            "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+            "retrieved_at": "2026-10-02T14:08:39.028Z"
+          },
+          "source_evidence": {
+            "quote": "The address of this store is Plot No 2, SW 1, Gr Flr, ICC Trade Tower, Senapati Bapat Road, Shivaji Nagar, Pune, Maharashtra.",
+            "method": "html",
+            "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+            "retrieved_at": "2026-10-02T14:08:39.028Z"
+          }
+        },
+        "confidence_method": "not_calibrated",
+        "validation_status": "valid",
+        "extraction_confidence": null,
+        "qualification_evidence": [
+          {
+            "quote": "Shivaji Nagar, Pune, Maharashtra",
+            "method": "html",
+            "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+            "retrieved_at": "2026-10-02T14:08:39.028Z"
+          },
+          {
+            "quote": "Discover the latest smartphones, laptops, TVs, and premium appliances",
+            "method": "html",
+            "source_url": "https://stores.vijaysales.com/vijay-sales-dhankawadi-electronics-retail-and-repair-shop-dhankawadi-pune-280960/Home",
+            "retrieved_at": "2026-10-02T14:08:39.028Z"
+          }
+        ]
+      },
+      "source_evidence": "The address of this store is Plot No 2, SW 1, Gr Flr, ICC Trade Tower, Senapati Bapat Road, Shivaji Nagar, Pune, Maharashtra."
+    }
+  ]
+}
