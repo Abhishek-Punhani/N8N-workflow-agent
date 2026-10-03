@@ -136,6 +136,43 @@ describe('IntakeAgent — Happy Path', () => {
     expect(fields[1].type).toBe('number');
   });
 
+  test('treats business lead email as optional unless explicitly mandatory', async () => {
+    const response = validResponse({
+      target_entity: 'TV retailers',
+      required_fields: [
+        { name: 'name', type: 'string', required: true },
+        { name: 'phone', type: 'string', required: true },
+        { name: 'email_address', type: 'email', required: true },
+      ],
+    });
+    const agent = new IntakeAgent({ llmClient: mockClient(response), timeoutMs: 5_000 });
+    const result = await agent.parse('3 Tv retailers in pune - give me name phone and email adderess');
+
+    expect(result.structured_objective.required_fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'name', required: true }),
+        expect.objectContaining({ name: 'phone', required: true }),
+        expect.objectContaining({ name: 'email_address', required: false }),
+      ])
+    );
+  });
+
+  test('keeps lead email required when the prompt explicitly requires email', async () => {
+    const response = validResponse({
+      target_entity: 'TV retailers',
+      required_fields: [
+        { name: 'name', type: 'string', required: true },
+        { name: 'email_address', type: 'email', required: true },
+      ],
+    });
+    const agent = new IntakeAgent({ llmClient: mockClient(response), timeoutMs: 5_000 });
+    const result = await agent.parse('Find TV retailers in Pune that must have email');
+
+    expect(result.structured_objective.required_fields).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'email_address', required: true })])
+    );
+  });
+
   test('returns data_sources correctly', () => {
     const sources = output.structured_objective.data_sources ?? [];
     expect(sources).toHaveLength(1);

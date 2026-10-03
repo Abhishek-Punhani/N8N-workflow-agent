@@ -273,6 +273,22 @@ export function evidenceSupports(value: unknown, quote: string, pageText: string
   return false;
 }
 
+function normalizeExtractedField(field: string, value: unknown): unknown {
+  if (typeof value !== 'string' || !/phone|telephone|contact_number/i.test(field)) return value;
+  const trimmed = value.trim();
+  if (/^[+\d\s().-]+$/.test(trimmed)) return trimmed;
+  const withoutLabel = trimmed.replace(
+    /^(?:tel(?:ephone)?|phone|mobile|mob|call|contact|t)\s*[:.-]?\s*/i,
+    ''
+  );
+  const match = withoutLabel.match(/\+?\d[\d\s().-]{5,}\d/);
+  const cleaned = (match?.[0] ?? withoutLabel).trim();
+  const digits = cleaned.replace(/\D/g, '');
+  return /^[+\d\s().-]+$/.test(cleaned) && digits.length >= 7 && digits.length <= 15
+    ? cleaned
+    : value;
+}
+
 export function mergeCandidates(candidates: Candidate[], identityFields: string[]): Candidate[] {
   const merged = new Map<string, Candidate>();
   for (const candidate of candidates) {
@@ -1173,6 +1189,7 @@ export async function collectData(
           const evidence: Record<string, FieldEvidence> = {};
           for (const field of fieldNames) {
             let fieldValue = (record.values as Row)[field];
+            fieldValue = normalizeExtractedField(field, fieldValue);
             let quote = (record.evidence as Row)[field];
             if (
               typeof fieldValue === 'string' &&

@@ -959,6 +959,25 @@ describe('General collection and evidence contracts', () => {
       collectData('Find TV shops Pune', objective, s.llm, s.options, s.dependencies)
     ).rejects.toThrow('No evidence-backed records');
   });
+  it('cleans phone label noise while preserving source evidence', async () => {
+    const noisy = record('Orbit TV Shop', 'T020 1234 5678');
+    noisy.evidence.phone = 'Orbit TV Shop Pune. T020 1234 5678';
+    const s = setup([plan, { records: [noisy] }], {
+      'https://shops.example/': '<p>Orbit TV Shop Pune. T020 1234 5678</p>',
+    });
+    const result = await collectData(
+      'Find TV shops Pune',
+      objective,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+
+    expect(result.records[0]).toMatchObject({ name: 'Orbit TV Shop', phone: '020 1234 5678' });
+    expect(validateRecords(result.records, objective, result.source)[0].phone).toBe(
+      '020 1234 5678'
+    );
+  });
   it('continues past a blocked seed and returns an explicit count shortfall', async () => {
     const s = setup(
       [

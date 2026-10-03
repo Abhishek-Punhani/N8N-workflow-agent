@@ -235,7 +235,7 @@ RULES:
 8. A supplied JSON API URL and explicit fields are sufficient; do not request clarification about obvious field meanings.
 9. Put semantic entity/geographic conditions (for example sells TVs, located in Pune India) in qualification_requirements. Do not invent hidden location.city, location.country or category predicates when these are not requested output fields. Constraints are explicit row-field predicates (for example userId equals 1 or price less than 500). Preserve every semantic qualification as a requirement needing source evidence.
 10. Evidence/provenance is platform metadata already attached to every field. Requests such as "include evidence for location and business activity" do NOT add evidence_location, evidence_business_activity or source_evidence columns. Add such a column only if the user explicitly names it as an output column. Business phone numbers are strings, never numeric quantities.
-11. Honor explicit optionality: "if publicly available", "where available", and "leave missing contacts blank" mean those fields have required:false. Otherwise preserve requested fields as required. Never silently relax an explicit completeness requirement. For professional lead requests, contact fields mean only contacts explicitly published for business use, not private personal details. Document this interpretation in assumptions and field descriptions. Keep personal and company contacts distinct; a company switchboard is not a founder's direct phone.`;
+11. Honor explicit optionality: "if publicly available", "where available", and "leave missing contacts blank" mean those fields have required:false. For professional and local-business lead requests, email fields are required:false unless the user explicitly says records must have email or to exclude records without email; many legitimate businesses publish phone/location but not email. Otherwise preserve requested fields as required. Never silently relax an explicit completeness requirement. For professional lead requests, contact fields mean only contacts explicitly published for business use, not private personal details. Document this interpretation in assumptions and field descriptions. Keep personal and company contacts distinct; a company switchboard is not a founder's direct phone.`;
   }
 
   /**
@@ -294,7 +294,7 @@ RULES:
     const structured_objective: StructuredObjective = {
       target_entity: parsed.target_entity.trim(),
       constraints: this.parseConstraints(parsed.constraints),
-      required_fields: this.parseRequiredFields(parsed.required_fields),
+      required_fields: this.parseRequiredFields(parsed.required_fields, _originalPrompt),
       data_sources: this.parseDataSources(parsed.data_sources),
       output_requirements: this.parseOutputRequirements(parsed.output_requirements),
       ...(Array.isArray(parsed.qualification_requirements) &&
@@ -358,7 +358,7 @@ RULES:
       .filter(c => c.field.length > 0);
   }
 
-  private parseRequiredFields(raw: unknown): FieldDefinition[] {
+  private parseRequiredFields(raw: unknown, originalPrompt = ''): FieldDefinition[] {
     if (!Array.isArray(raw)) return [];
 
     const validTypes: FieldDefinitionType[] = [
@@ -371,16 +371,40 @@ RULES:
       'object',
     ];
 
+    const isLeadRequest =
+      /\b(leads?|retailers?|dealers?|shops?|stores?|business(?:es)?|companies|agencies|vendors|suppliers)\b/i.test(
+        originalPrompt
+      );
+    const emailExplicitlyMandatory =
+      /\b(must|only|require(?:d)?|mandatory|exclude|without)\b[^.]{0,80}\bemail\b/i.test(
+        originalPrompt
+      ) || /\bemail\b[^.]{0,80}\b(must|only|required|mandatory)\b/i.test(originalPrompt);
+    const optionalContacts =
+      /\b(if|when|where)\s+(publicly\s+)?available\b/i.test(originalPrompt) ||
+      /\bleave\s+missing\b/i.test(originalPrompt);
+
     return raw
       .filter((f): f is Record<string, unknown> => typeof f === 'object' && f !== null)
-      .map(f => ({
-        name: typeof f['name'] === 'string' ? f['name'] : String(f['name'] ?? ''),
-        type: validTypes.includes(f['type'] as FieldDefinitionType)
+      .map(f => {
+        const name = typeof f['name'] === 'string' ? f['name'] : String(f['name'] ?? '');
+        const type = validTypes.includes(f['type'] as FieldDefinitionType)
           ? (f['type'] as FieldDefinitionType)
-          : 'string',
-        required: f['required'] !== false,
-        description: typeof f['description'] === 'string' ? f['description'] : undefined,
-      }))
+          : 'string';
+        const isEmailField = type === 'email' || /(^|_)e-?mail(_|$)|email/i.test(name);
+        return {
+          name,
+          type,
+          required:
+            f['required'] !== false &&
+            !(isEmailField && (optionalContacts || (isLeadRequest && !emailExplicitlyMandatory))),
+          description:
+            typeof f['description'] === 'string'
+              ? f['description']
+              : isEmailField
+                ? 'Publicly listed business email, blank when not published.'
+                : undefined,
+        };
+      })
       .filter(f => f.name.length > 0);
   }
 
