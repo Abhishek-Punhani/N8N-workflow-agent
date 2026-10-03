@@ -33,6 +33,17 @@ export interface ExecutionResult {
     stop_reason?: string;
     sources: Array<{ url: string; state: string; records: number; message?: string }>;
     warnings: string[];
+    queries?: string[];
+    model_calls?: number;
+    activity?: { at: string; kind: string; message: string; url?: string };
+    events?: Array<{ at: string; kind: string; message: string; url?: string }>;
+    budgets?: { pages: number; model_calls: number; seconds: number };
+    elapsed_ms?: number;
+    started_at?: string;
+    queued_sources?: number;
+    candidate_records?: number;
+    candidate_issues?: Array<{ entity: string; issues: string[] }>;
+    requirements?: string[];
   };
   prompt?: string;
   execution_id: string;

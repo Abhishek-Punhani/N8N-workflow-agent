@@ -1,0 +1,788 @@
+{
+  "job": {
+    "prompt": "Find 3 Bengaluru startups working on both AI and blockchain. Return company name, founder name, official website and founder LinkedIn URL where publicly linked. Include company business email and phone only when published for business enquiries; leave missing contacts blank. Include evidence for location and business activity.",
+    "status": "completed",
+    "collection": {
+      "phase": "finished",
+      "events": [
+        {
+          "at": "2026-10-03T11:06:18.105Z",
+          "kind": "searching",
+          "message": "Bengaluru startups AI blockchain"
+        },
+        {
+          "at": "2026-10-03T11:06:18.967Z",
+          "kind": "searching",
+          "message": "site:linkedin.com Bengaluru founder AI blockchain startup"
+        },
+        {
+          "at": "2026-10-03T11:06:19.288Z",
+          "kind": "searching",
+          "message": "Bengaluru AI blockchain company contact email phone"
+        },
+        {
+          "at": "2026-10-03T11:06:20.103Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 15 search results"
+        },
+        {
+          "at": "2026-10-03T11:06:20.384Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 15 search results"
+        },
+        {
+          "at": "2026-10-03T11:06:20.668Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 15 search results"
+        },
+        {
+          "at": "2026-10-03T11:06:20.940Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 2 search results"
+        },
+        {
+          "at": "2026-10-03T11:06:21.139Z",
+          "url": "https://www.f6s.com/companies/blockchain/india/karnataka/bangalore/co",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:06:21.874Z",
+          "url": "https://www.f6s.com/companies/blockchain/india/karnataka/bangalore/co",
+          "kind": "source_unavailable",
+          "message": "Crawling disallowed by robots.txt"
+        },
+        {
+          "at": "2026-10-03T11:06:21.886Z",
+          "url": "https://echai.ventures/bengaluru/ai",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:06:22.558Z",
+          "url": "https://echai.ventures/bengaluru/ai",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:06:47.062Z",
+          "url": "https://ijurugsoft.com/",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:06:49.672Z",
+          "url": "https://ijurugsoft.com/",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:07:39.204Z",
+          "kind": "searching",
+          "message": "Bengaluru startup \"AI\" \"blockchain\" founder site:linkedin.com"
+        },
+        {
+          "at": "2026-10-03T11:07:39.990Z",
+          "kind": "searching",
+          "message": "Bengaluru \"AI\" \"blockchain\" startup contact email phone -site:linkedin.com -site:tracxn.com"
+        },
+        {
+          "at": "2026-10-03T11:07:40.324Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 15 search results"
+        },
+        {
+          "at": "2026-10-03T11:07:42.729Z",
+          "url": "https://in.linkedin.com/in/allen-sam-26093611b",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:07:43.260Z",
+          "url": "https://in.linkedin.com/in/allen-sam-26093611b",
+          "kind": "source_unavailable",
+          "message": "Crawling disallowed by robots.txt"
+        },
+        {
+          "at": "2026-10-03T11:07:43.272Z",
+          "url": "https://www.linkedin.com/company/reput-ai/",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:07:43.682Z",
+          "url": "https://www.linkedin.com/company/reput-ai/",
+          "kind": "source_unavailable",
+          "message": "Crawling disallowed by robots.txt"
+        },
+        {
+          "at": "2026-10-03T11:07:43.696Z",
+          "url": "https://echai.ventures/bengaluru/web3",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:07:44.032Z",
+          "url": "https://echai.ventures/bengaluru/web3",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:08:03.343Z",
+          "kind": "verifying",
+          "message": "Checking entity, field relationships and qualifications: Wow Labz · https://wowlabz.com/"
+        },
+        {
+          "at": "2026-10-03T11:08:15.875Z",
+          "kind": "accepted",
+          "message": "Accepted Wow Labz · https://wowlabz.com/"
+        },
+        {
+          "at": "2026-10-03T11:08:33.412Z",
+          "kind": "searching",
+          "message": "Bengaluru startup \"AI\" \"blockchain\" founder site:linkedin.com -site:tracxn.com -site:crunchbase.com"
+        },
+        {
+          "at": "2026-10-03T11:08:33.956Z",
+          "kind": "searching",
+          "message": "Bengaluru \"AI\" \"blockchain\" startup contact email phone -site:linkedin.com -site:tracxn.com -site:crunchbase.com"
+        },
+        {
+          "at": "2026-10-03T11:08:34.357Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 15 search results"
+        },
+        {
+          "at": "2026-10-03T11:08:46.735Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 5 search results"
+        },
+        {
+          "at": "2026-10-03T11:08:55.094Z",
+          "url": "https://clutch.co/in/developers/blockchain/bengaluru",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:08:55.198Z",
+          "url": "https://clutch.co/in/developers/blockchain/bengaluru",
+          "kind": "source_unavailable",
+          "message": "Human verification required; this source needs an authorized session or an alternative source"
+        },
+        {
+          "at": "2026-10-03T11:08:55.204Z",
+          "url": "https://themanifest.com/in/blockchain/companies/bengaluru",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:08:55.695Z",
+          "url": "https://themanifest.com/in/blockchain/companies/bengaluru",
+          "kind": "source_unavailable",
+          "message": "Human verification required; this source needs an authorized session or an alternative source"
+        },
+        {
+          "at": "2026-10-03T11:08:55.711Z",
+          "url": "https://business-software.in/ai-development-company-bangalore/",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:08:57.808Z",
+          "url": "https://business-software.in/ai-development-company-bangalore/",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:09:36.576Z",
+          "kind": "searching",
+          "message": "Bengaluru startup \"AI\" \"blockchain\" founder site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in"
+        },
+        {
+          "at": "2026-10-03T11:09:37.431Z",
+          "kind": "searching",
+          "message": "Bengaluru \"AI\" \"blockchain\" startup contact email phone -site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in"
+        },
+        {
+          "at": "2026-10-03T11:09:37.825Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 15 search results"
+        },
+        {
+          "at": "2026-10-03T11:09:56.252Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 5 search results"
+        },
+        {
+          "at": "2026-10-03T11:10:06.588Z",
+          "url": "https://tracxn.com/d/explore/blockchain-technology-startups-in-bengaluru-india/__pk5sh4Ow-9qA2wXnGE6gOq1gs-yR22RyEUx3WXUr7Ew/companies",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:10:07.186Z",
+          "url": "https://tracxn.com/d/explore/blockchain-technology-startups-in-bengaluru-india/__pk5sh4Ow-9qA2wXnGE6gOq1gs-yR22RyEUx3WXUr7Ew/companies",
+          "kind": "source_unavailable",
+          "message": "Crawling disallowed by robots.txt"
+        },
+        {
+          "at": "2026-10-03T11:10:07.208Z",
+          "url": "https://rubixe.com/contact-us/",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:10:07.973Z",
+          "url": "https://rubixe.com/contact-us/",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:10:33.280Z",
+          "url": "https://techbehemoths.com/companies/blockchain/bangalore",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:10:33.451Z",
+          "url": "https://techbehemoths.com/companies/blockchain/bangalore",
+          "kind": "source_unavailable",
+          "message": "Human verification required; this source needs an authorized session or an alternative source"
+        },
+        {
+          "at": "2026-10-03T11:10:56.274Z",
+          "kind": "searching",
+          "message": "Bengaluru startup \"AI\" \"blockchain\" founder site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in -site:rubixe.com -site:inmobi.com -site:sarvam.ai"
+        },
+        {
+          "at": "2026-10-03T11:10:56.732Z",
+          "kind": "searching",
+          "message": "Bengaluru \"AI\" \"blockchain\" startup contact email phone -site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in -site:rubixe.com -site:inmobi.com -site:sarvam.ai"
+        },
+        {
+          "at": "2026-10-03T11:10:57.068Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 15 search results"
+        },
+        {
+          "at": "2026-10-03T11:11:15.506Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 5 search results"
+        },
+        {
+          "at": "2026-10-03T11:11:27.865Z",
+          "url": "https://rubixe.com/",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:11:28.300Z",
+          "url": "https://rubixe.com/",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:11:54.625Z",
+          "url": "https://topwebdevelopmentcompanies.com/in/top-10/blockchain-development/bangalore",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:11:58.032Z",
+          "url": "https://topwebdevelopmentcompanies.com/in/top-10/blockchain-development/bangalore",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:12:22.626Z",
+          "url": "https://beststartup.in/35-bengaluru-based-blockchain-companies-the-most-innovative-blockchain-companies/",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:12:24.083Z",
+          "url": "https://beststartup.in/35-bengaluru-based-blockchain-companies-the-most-innovative-blockchain-companies/",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:13:12.464Z",
+          "kind": "searching",
+          "message": "Bengaluru startup \"AI\" \"blockchain\" founder site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in -site:rubixe.com -site:inmobi.com -site:sarvam.ai -site:wowlabz.com"
+        },
+        {
+          "at": "2026-10-03T11:13:12.974Z",
+          "kind": "searching",
+          "message": "Bengaluru \"AI\" \"blockchain\" startup contact email phone -site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in -site:rubixe.com -site:inmobi.com -site:sarvam.ai -site:wowlabz.com"
+        },
+        {
+          "at": "2026-10-03T11:13:13.361Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 15 search results"
+        },
+        {
+          "at": "2026-10-03T11:13:33.807Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 5 search results"
+        },
+        {
+          "at": "2026-10-03T11:13:45.210Z",
+          "url": "https://www.zhihu.com/question/36083168",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:13:46.506Z",
+          "url": "https://www.zhihu.com/question/36083168",
+          "kind": "source_unavailable",
+          "message": "Crawling disallowed by robots.txt"
+        },
+        {
+          "at": "2026-10-03T11:13:46.522Z",
+          "url": "https://health.aws.amazon.com/health/status",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:13:53.576Z",
+          "url": "https://health.aws.amazon.com/health/status",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:13:54.981Z",
+          "url": "https://docs.aws.amazon.com/decision-guides/",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:13:56.002Z",
+          "url": "https://docs.aws.amazon.com/decision-guides/",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:14:48.677Z",
+          "kind": "searching",
+          "message": "Bengaluru startup \"AI\" \"blockchain\" founder site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in -site:rubixe.com -site:inmobi.com -site:sarvam.ai -site:wowlabz.com -site:beststartup.in"
+        },
+        {
+          "at": "2026-10-03T11:14:49.128Z",
+          "kind": "searching",
+          "message": "Bengaluru \"AI\" \"blockchain\" startup contact email phone -site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in -site:rubixe.com -site:inmobi.com -site:sarvam.ai -site:wowlabz.com -site:beststartup.in"
+        },
+        {
+          "at": "2026-10-03T11:14:49.472Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 11 search results"
+        },
+        {
+          "at": "2026-10-03T11:15:03.920Z",
+          "url": "https://signin.aws.amazon.com/signup?request_type=register",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:15:09.050Z",
+          "url": "https://signin.aws.amazon.com/signup?request_type=register",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:15:18.547Z",
+          "url": "https://rubixe.com/contact-us",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:15:18.863Z",
+          "url": "https://rubixe.com/contact-us",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:15:45.240Z",
+          "url": "https://builtinbengaluru.in/articles/blockchain-companies-in-bengaluru",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:15:46.147Z",
+          "url": "https://builtinbengaluru.in/articles/blockchain-companies-in-bengaluru",
+          "kind": "source_unavailable",
+          "message": "Human verification required; this source needs an authorized session or an alternative source"
+        },
+        {
+          "at": "2026-10-03T11:15:46.163Z",
+          "url": "https://www.simplileap.com/",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:15:47.021Z",
+          "url": "https://www.simplileap.com/",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:16:13.320Z",
+          "kind": "finished",
+          "message": "1 of 3 records accepted; sources exhausted"
+        }
+      ],
+      "budgets": {
+        "pages": 30,
+        "seconds": 600,
+        "model_calls": 80
+      },
+      "queries": [
+        "Bengaluru startups AI blockchain",
+        "site:linkedin.com Bengaluru founder AI blockchain startup",
+        "Bengaluru AI blockchain company contact email phone",
+        "Bengaluru startup \"AI\" \"blockchain\" founder site:linkedin.com",
+        "Bengaluru \"AI\" \"blockchain\" startup contact email phone -site:linkedin.com -site:tracxn.com",
+        "Bengaluru startup \"AI\" \"blockchain\" founder site:linkedin.com -site:tracxn.com -site:crunchbase.com",
+        "Bengaluru \"AI\" \"blockchain\" startup contact email phone -site:linkedin.com -site:tracxn.com -site:crunchbase.com",
+        "Bengaluru startup \"AI\" \"blockchain\" founder site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in",
+        "Bengaluru \"AI\" \"blockchain\" startup contact email phone -site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in",
+        "Bengaluru startup \"AI\" \"blockchain\" founder site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in -site:rubixe.com -site:inmobi.com -site:sarvam.ai",
+        "Bengaluru \"AI\" \"blockchain\" startup contact email phone -site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in -site:rubixe.com -site:inmobi.com -site:sarvam.ai",
+        "Bengaluru startup \"AI\" \"blockchain\" founder site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in -site:rubixe.com -site:inmobi.com -site:sarvam.ai -site:wowlabz.com",
+        "Bengaluru \"AI\" \"blockchain\" startup contact email phone -site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in -site:rubixe.com -site:inmobi.com -site:sarvam.ai -site:wowlabz.com",
+        "Bengaluru startup \"AI\" \"blockchain\" founder site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in -site:rubixe.com -site:inmobi.com -site:sarvam.ai -site:wowlabz.com -site:beststartup.in",
+        "Bengaluru \"AI\" \"blockchain\" startup contact email phone -site:linkedin.com -site:tracxn.com -site:crunchbase.com -site:echai.ventures -site:ijurugsoft.com -site:business-software.in -site:rubixe.com -site:inmobi.com -site:sarvam.ai -site:wowlabz.com -site:beststartup.in"
+      ],
+      "sources": [
+        {
+          "url": "https://www.f6s.com/companies/blockchain/india/karnataka/bangalore/co",
+          "state": "denied",
+          "message": "Crawling disallowed by robots.txt",
+          "records": 0
+        },
+        {
+          "url": "https://echai.ventures/bengaluru/ai",
+          "state": "available",
+          "records": 2
+        },
+        {
+          "url": "https://ijurugsoft.com/",
+          "state": "available",
+          "records": 1
+        },
+        {
+          "url": "https://in.linkedin.com/in/allen-sam-26093611b",
+          "state": "denied",
+          "message": "Crawling disallowed by robots.txt",
+          "records": 0
+        },
+        {
+          "url": "https://www.linkedin.com/company/reput-ai/",
+          "state": "denied",
+          "message": "Crawling disallowed by robots.txt",
+          "records": 0
+        },
+        {
+          "url": "https://echai.ventures/bengaluru/web3",
+          "state": "available",
+          "records": 1
+        },
+        {
+          "url": "https://in.linkedin.com/in/manishgeu8",
+          "state": "denied",
+          "message": "Crawling disallowed by robots.txt (cached rules; no page request)",
+          "records": 0
+        },
+        {
+          "url": "https://clutch.co/in/developers/blockchain/bengaluru",
+          "state": "challenge",
+          "message": "Human verification required; this source needs an authorized session or an alternative source",
+          "records": 0
+        },
+        {
+          "url": "https://themanifest.com/in/blockchain/companies/bengaluru",
+          "state": "challenge",
+          "message": "Human verification required; this source needs an authorized session or an alternative source",
+          "records": 0
+        },
+        {
+          "url": "https://business-software.in/ai-development-company-bangalore/",
+          "state": "available",
+          "records": 1
+        },
+        {
+          "url": "https://tracxn.com/d/explore/blockchain-technology-startups-in-bengaluru-india/__pk5sh4Ow-9qA2wXnGE6gOq1gs-yR22RyEUx3WXUr7Ew/companies",
+          "state": "denied",
+          "message": "Crawling disallowed by robots.txt",
+          "records": 0
+        },
+        {
+          "url": "https://rubixe.com/contact-us/",
+          "state": "available",
+          "records": 1
+        },
+        {
+          "url": "https://www.linkedin.com/company/rubixe",
+          "state": "denied",
+          "message": "Crawling disallowed by robots.txt (cached rules; no page request)",
+          "records": 0
+        },
+        {
+          "url": "https://www.f6s.com/companies/generative-ai/india/karnataka/bangalore/co",
+          "state": "denied",
+          "message": "Crawling disallowed by robots.txt (cached rules; no page request)",
+          "records": 0
+        },
+        {
+          "url": "https://techbehemoths.com/companies/blockchain/bangalore",
+          "state": "challenge",
+          "message": "Human verification required; this source needs an authorized session or an alternative source",
+          "records": 0
+        },
+        {
+          "url": "https://rubixe.com/",
+          "state": "available",
+          "records": 1
+        },
+        {
+          "url": "https://topwebdevelopmentcompanies.com/in/top-10/blockchain-development/bangalore",
+          "state": "available",
+          "records": 0
+        },
+        {
+          "url": "https://beststartup.in/35-bengaluru-based-blockchain-companies-the-most-innovative-blockchain-companies/",
+          "state": "available",
+          "records": 2
+        },
+        {
+          "url": "https://www.zhihu.com/question/36083168",
+          "state": "denied",
+          "message": "Crawling disallowed by robots.txt",
+          "records": 0
+        },
+        {
+          "url": "https://health.aws.amazon.com/health/status",
+          "state": "available",
+          "records": 0
+        },
+        {
+          "url": "https://docs.aws.amazon.com/decision-guides/",
+          "state": "available",
+          "records": 0
+        },
+        {
+          "url": "https://signin.aws.amazon.com/signup?request_type=register",
+          "state": "available",
+          "records": 0
+        },
+        {
+          "url": "https://rubixe.com/contact-us",
+          "state": "available",
+          "records": 1
+        },
+        {
+          "url": "https://builtinbengaluru.in/articles/blockchain-companies-in-bengaluru",
+          "state": "challenge",
+          "message": "Human verification required; this source needs an authorized session or an alternative source",
+          "records": 0
+        },
+        {
+          "url": "https://www.simplileap.com/",
+          "state": "available",
+          "records": 1
+        }
+      ],
+      "activity": {
+        "at": "2026-10-03T11:16:13.320Z",
+        "kind": "finished",
+        "message": "1 of 3 records accepted; sources exhausted"
+      },
+      "coverage": "partial",
+      "warnings": [
+        "Search engine brave unavailable: too many requests. Search coverage may be reduced.",
+        "Search engine google unavailable: access denied. Search coverage may be reduced.",
+        "Search engine brave unavailable: Suspended: too many requests. Search coverage may be reduced.",
+        "Search engine duckduckgo unavailable: CAPTCHA. Search coverage may be reduced.",
+        "Search engine google unavailable: Suspended: access denied. Search coverage may be reduced.",
+        "5 evidence-backed candidates remain incomplete. Missing required fields across these candidates: company_name, founder_name, official_website. Required fields were not relaxed.",
+        "Collected 1 of 3 requested records; sources exhausted"
+      ],
+      "elapsed_ms": 595518,
+      "model_calls": 35,
+      "stop_reason": "sources_exhausted",
+      "requirements": [
+        "startups",
+        "Located in Bengaluru",
+        "Working on AI",
+        "Working on blockchain"
+      ],
+      "pages_visited": 22,
+      "queued_sources": 0,
+      "accepted_records": 1,
+      "candidate_issues": [
+        {
+          "entity": "InMobi · https://www.inmobi.com/",
+          "issues": [
+            "Needs evidence: Working on blockchain"
+          ]
+        },
+        {
+          "entity": "Sarvam AI · https://www.sarvam.ai/",
+          "issues": [
+            "Needs evidence: Working on blockchain"
+          ]
+        },
+        {
+          "entity": "iJurug Soft · https://ijurugsoft.com/",
+          "issues": [
+            "Missing founder_name"
+          ]
+        },
+        {
+          "entity": "https://business-software.in/",
+          "issues": [
+            "Missing company_name"
+          ]
+        },
+        {
+          "entity": "Rubixe · https://rubixe.com/",
+          "issues": [
+            "Missing founder_name"
+          ]
+        },
+        {
+          "entity": "Pucho Technology Information Private Limited",
+          "issues": [
+            "Missing official_website"
+          ]
+        },
+        {
+          "entity": "Yebelo Technologies",
+          "issues": [
+            "Missing official_website"
+          ]
+        },
+        {
+          "entity": "Simplileap · https://www.simplileap.com/",
+          "issues": [
+            "Needs evidence: Working on AI",
+            "Needs evidence: Working on blockchain"
+          ]
+        }
+      ],
+      "rejected_records": 31,
+      "candidate_records": 9,
+      "requested_records": 3
+    },
+    "started_at": "2026-10-03T11:06:14.925Z",
+    "duration_ms": 599305,
+    "workflow_id": "oexHsIqBvA4MsxAx",
+    "completed_at": "2026-10-03T11:16:14.229Z",
+    "execution_id": "8d777b2e-4309-4a0b-8229-0b6b9dcde3f5",
+    "records_processed": 1,
+    "verification_stages": [
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:06:17.802Z",
+        "stage_name": "Intake"
+      },
+      {
+        "status": "success",
+        "message": "finished: 22 pages, 1 accepted records",
+        "timestamp": "2026-10-03T11:16:13.327Z",
+        "stage_name": "Plan"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:16:13.334Z",
+        "stage_name": "Structure"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:16:13.341Z",
+        "stage_name": "Compile"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:16:13.350Z",
+        "stage_name": "Contract"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:16:13.798Z",
+        "stage_name": "Sandbox"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:16:14.225Z",
+        "stage_name": "Run"
+      }
+    ]
+  },
+  "records": [
+    {
+      "_provenance": {
+        "source_url": "https://echai.ventures/bengaluru/web3",
+        "dedupe_group": "a355bcf769dca9b7e86159e5753681425abd45d47865bd4425e379c298cf49d4",
+        "field_evidence": {
+          "company_name": {
+            "quote": "Wow Labz Web3 Amit Singh & Roshit Omanakuttan",
+            "method": "html",
+            "context": "st Bitcoin company / exchange, started in Tumakuru and moved to Bengaluru. A pioneer that survived India's banking ban and regulatory whiplash; co-founder Harish BV was briefly... Wow Labz Web3 Amit Singh & Roshit Omanakuttan Founded 2011; bootstrapped Bengaluru product studio building full-stack AI + blockchain/Web3 products (400+ products across 20+ industries). Founder Amit Sin ... ntext\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"ite",
+            "source_url": "https://echai.ventures/bengaluru/web3",
+            "retrieved_at": "2026-10-03T11:08:03.335Z"
+          },
+          "founder_name": {
+            "quote": "Wow Labz Web3 Amit Singh & Roshit Omanakuttan",
+            "method": "html",
+            "context": "st Bitcoin company / exchange, started in Tumakuru and moved to Bengaluru. A pioneer that survived India's banking ban and regulatory whiplash; co-founder Harish BV was briefly... Wow Labz Web3 Amit Singh & Roshit Omanakuttan Founded 2011; bootstrapped Bengaluru product studio building full-stack AI + blockchain/Web3 products (400+ products across 20+ industries). Founder Amit Sin ... ntext\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"ite",
+            "source_url": "https://echai.ventures/bengaluru/web3",
+            "retrieved_at": "2026-10-03T11:08:03.335Z"
+          },
+          "official_website": {
+            "quote": "{\"@type\":\"Organization\",\"name\":\"Wow Labz\",\"url\":\"https://wowlabz.com/\"}",
+            "method": "html",
+            "context": "\"https://mudrex.com/\"}},{\"@type\":\"ListItem\",\"position\":6,\"item\":{\"@type\":\"Organization\",\"name\":\"Unocoin\",\"url\":\"https://www.unocoin.com/\"}},{\"@type\":\"ListItem\",\"position\":7,\"item\":{\"@type\":\"Organization\",\"name\":\"Wow Labz\",\"url\":\"https://wowlabz.com/\"}}]}} {\"@context\":\"https://schema.org\",\"@type\":\"ItemList\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"item\":{\"@type\":\"Event\",\"name\":\"Bengaluru Startup Meetup : Koramangala edition\",\"startDate\":\"2026-10-03T18:00:0",
+            "source_url": "https://echai.ventures/bengaluru/web3",
+            "retrieved_at": "2026-10-03T11:08:03.335Z"
+          }
+        },
+        "evidence_review": {
+          "method": "model_evidence_review",
+          "accepted": true
+        },
+        "confidence_method": "not_calibrated",
+        "validation_status": "valid",
+        "extraction_confidence": null,
+        "qualification_evidence": [
+          {
+            "quote": "bootstrapped Bengaluru product studio",
+            "method": "html",
+            "context": " to Bengaluru. A pioneer that survived India's banking ban and regulatory whiplash; co-founder Harish BV was briefly... Wow Labz Web3 Amit Singh & Roshit Omanakuttan Founded 2011; bootstrapped Bengaluru product studio building full-stack AI + blockchain/Web3 products (400+ products across 20+ industries). Founder Amit Sin ... ntext\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"nam",
+            "source_url": "https://echai.ventures/bengaluru/web3",
+            "retrieved_at": "2026-10-03T11:08:03.335Z",
+            "requirement_index": 0
+          },
+          {
+            "quote": "building full-stack AI + blockchain/Web3 products",
+            "method": "html",
+            "context": " India's banking ban and regulatory whiplash; co-founder Harish BV was briefly... Wow Labz Web3 Amit Singh & Roshit Omanakuttan Founded 2011; bootstrapped Bengaluru product studio building full-stack AI + blockchain/Web3 products (400+ products across 20+ industries). Founder Amit Sin ... ntext\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"name\":\"eChai\",\"item\":\"https://echai.ventures/\"},{\"@ty",
+            "source_url": "https://echai.ventures/bengaluru/web3",
+            "retrieved_at": "2026-10-03T11:08:03.335Z",
+            "requirement_index": 1
+          },
+          {
+            "quote": "building full-stack AI + blockchain/Web3 products",
+            "method": "html",
+            "context": " India's banking ban and regulatory whiplash; co-founder Harish BV was briefly... Wow Labz Web3 Amit Singh & Roshit Omanakuttan Founded 2011; bootstrapped Bengaluru product studio building full-stack AI + blockchain/Web3 products (400+ products across 20+ industries). Founder Amit Sin ... ntext\":\"https://schema.org\",\"@type\":\"BreadcrumbList\",\"itemListElement\":[{\"@type\":\"ListItem\",\"position\":1,\"name\":\"eChai\",\"item\":\"https://echai.ventures/\"},{\"@ty",
+            "source_url": "https://echai.ventures/bengaluru/web3",
+            "retrieved_at": "2026-10-03T11:08:03.335Z",
+            "requirement_index": 2
+          }
+        ]
+      },
+      "company_name": "Wow Labz",
+      "founder_name": "Amit Singh",
+      "official_website": "https://wowlabz.com/"
+    }
+  ]
+}

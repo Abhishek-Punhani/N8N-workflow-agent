@@ -35,6 +35,17 @@ function setup(
   const llm: LLMClient = {
     complete: jest.fn().mockImplementation((system: string, data: string) => {
       // Default ranking accepts the fixture source; individual tests override it.
+      if (system.startsWith('Review extracted')) {
+        const input = JSON.parse(data);
+        return Promise.resolve(
+          JSON.stringify({
+            entity_supported: true,
+            supported_fields: Object.keys(input.values),
+            supported_requirements: input.requirements.map((_: unknown, index: number) => index),
+            issues: [],
+          })
+        );
+      }
       if (system.startsWith('Rank observed'))
         return Promise.resolve(
           JSON.stringify({
@@ -89,6 +100,295 @@ const record = (name: string, phone: string) => ({
 });
 
 describe('General collection and evidence contracts', () => {
+  it('plans navigation from observed links after validation leaves a shortfall', async () => {
+    const s = setup(
+      [
+        { queries: [], identity_fields: ['name'] },
+        {
+          records: [
+            {
+              values: { name: 'Orbit' },
+              evidence: { name: 'Orbit' },
+              qualification_quotes: ['Orbit'],
+            },
+          ],
+          follow_links: [],
+        },
+        { follow_links: [0, 999] },
+        { records: [record('Orbit', '02012345678')] },
+      ],
+      {
+        'https://shops.example/': '<p>Orbit TV shop</p><a href="/branch-detail">Branch details</a>',
+        'https://shops.example/branch-detail': '<p>Orbit TV shop phone 02012345678</p>',
+      }
+    );
+    const result = await collectData(
+      'Collect one TV shop from https://shops.example/',
+      objective,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.records).toHaveLength(1);
+    expect(s.dependencies.fetch).toHaveBeenCalledWith(
+      'https://shops.example/branch-detail',
+      expect.anything()
+    );
+  });
+  it('uses an exact observed anchor title when the model quotes a truncated label', async () => {
+    const s = setup(
+      [
+        { queries: [], identity_fields: ['name'] },
+        {
+          records: [
+            {
+              ...record('Orbit Television Emporium', '02012345678'),
+              evidence: { name: 'Orbit ...', phone: '02012345678' },
+            },
+          ],
+        },
+      ],
+      {
+        'https://shops.example/':
+          '<p>TV retailer 02012345678</p><a href="/branch" title="Orbit Television Emporium">Orbit ...</a>',
+      }
+    );
+    const result = await collectData(
+      'Collect a TV retailer from https://shops.example/',
+      objective,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.records[0].name).toBe('Orbit Television Emporium');
+  });
+  it('stops evidence reviews once the requested count is satisfied', async () => {
+    const s = setup(
+      [
+        { queries: [], identity_fields: ['name'] },
+        { records: [record('Orbit', '02012345678'), record('Nova', '02022222222')] },
+      ],
+      {
+        'https://shops.example/': '<p>Orbit 02012345678. Nova 02022222222</p>',
+      }
+    );
+    const result = await collectData(
+      'Collect one TV shop from https://shops.example/',
+      objective,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.records).toHaveLength(1);
+    expect(
+      (s.llm.complete as jest.Mock).mock.calls.filter(([system]) =>
+        system.startsWith('Review extracted')
+      )
+    ).toHaveLength(1);
+  });
+  it('searches an observed identity plus missing fields even if the model omits enrichment', async () => {
+    const s = setup(
+      [
+        plan,
+        {
+          records: [
+            {
+              values: { name: 'Orbit' },
+              evidence: { name: 'Orbit' },
+              qualification_quotes: ['Orbit'],
+            },
+          ],
+        },
+        { queries: [] },
+        { records: [record('Orbit', '02012345678')] },
+      ],
+      {
+        'https://shops.example/': '<p>Orbit TV shop</p>',
+        'https://contact.example/': '<p>Orbit TV shop phone 02012345678</p>',
+      },
+      { maxModelCalls: 20 }
+    );
+    s.dependencies.search = jest
+      .fn()
+      .mockResolvedValueOnce([{ url: 'https://shops.example/', title: 'Orbit', snippet: '' }])
+      .mockResolvedValueOnce([
+        { url: 'https://contact.example/', title: 'Orbit contact', snippet: '' },
+      ]);
+    const result = await collectData(
+      'Find a TV shop in Pune with name and phone',
+      objective,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.records).toHaveLength(1);
+    expect(result.report.queries).toContain('"Orbit" phone');
+  });
+  it('combines qualification evidence across pages without shifting null requirement indexes', async () => {
+    const wanted = {
+      ...objective,
+      qualification_requirements: ['Sells televisions', 'Located in Pune'],
+    };
+    const s = setup(
+      [
+        { queries: [], identity_fields: ['name'] },
+        {
+          records: [
+            {
+              values: { name: 'Orbit' },
+              evidence: { name: 'Orbit' },
+              qualification_quotes: ['Orbit sells televisions', null],
+            },
+          ],
+          follow_links: [0],
+        },
+        {
+          records: [
+            {
+              ...record('Orbit', '02012345678'),
+              qualification_quotes: [null, 'Orbit is located in Pune'],
+            },
+          ],
+        },
+      ],
+      {
+        'https://shops.example/': '<p>Orbit sells televisions</p><a href="/contact">Contact</a>',
+        'https://shops.example/contact': '<p>Orbit is located in Pune. Phone 02012345678</p>',
+      }
+    );
+    const result = await collectData(
+      'Find a TV shop from https://shops.example/',
+      wanted,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.records).toHaveLength(1);
+    expect(result.report.events?.map(event => event.kind)).toContain('verifying');
+    expect(result.records[0]._qualification_evidence).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ requirement_index: 0, source_url: 'https://shops.example/' }),
+        expect.objectContaining({
+          requirement_index: 1,
+          source_url: 'https://shops.example/contact',
+        }),
+      ])
+    );
+  });
+
+  it('excludes literal values when evidence review rejects their relationship to the entity', async () => {
+    let saved: CollectionOptions['checkpoint'];
+    const s = setup(
+      [{ queries: [], identity_fields: ['name'] }, { records: [record('Orbit', '02012345678')] }],
+      {
+        'https://shops.example/':
+          '<p>Orbit recommends Other Shop. Other Shop phone 02012345678</p>',
+      },
+      {
+        onProgress: (_report, state) => {
+          saved = structuredClone(state);
+          return Promise.resolve();
+        },
+      }
+    );
+    const original = s.llm.complete;
+    s.llm.complete = jest
+      .fn()
+      .mockImplementation((system: string, data: string, signal: AbortSignal) =>
+        system.startsWith('Review extracted')
+          ? Promise.resolve(
+              JSON.stringify({
+                entity_supported: true,
+                supported_fields: ['name'],
+                supported_requirements: [],
+                issues: ['Phone belongs to another business'],
+              })
+            )
+          : original(system, data, signal)
+      );
+    await expect(
+      collectData(
+        'Collect name and phone from https://shops.example/',
+        objective,
+        s.llm,
+        s.options,
+        s.dependencies
+      )
+    ).rejects.toThrow('No evidence-backed records');
+    expect(saved?.report.candidate_issues?.[0].issues).toContain(
+      'Phone belongs to another business'
+    );
+  });
+
+  it('discovers additional entities after completing one and returns three distinct records', async () => {
+    const wanted = { ...objective, output_requirements: { max_records: 3 } };
+    const s = setup(
+      [
+        plan,
+        { records: [record('Orbit', '02012345678')] },
+        { queries: ['More Pune TV shops excluding Orbit'] },
+        { records: [record('Nova', '02022222222'), record('Lumen', '02033333333')] },
+      ],
+      {
+        'https://shops.example/': '<p>Orbit 02012345678</p>',
+        'https://others.example/': '<p>Nova 02022222222. Lumen 02033333333</p>',
+      },
+      { maxModelCalls: 20 }
+    );
+    s.dependencies.search = jest
+      .fn()
+      .mockResolvedValueOnce([{ url: 'https://shops.example/', title: 'Orbit', snippet: '' }])
+      .mockResolvedValueOnce([
+        { url: 'https://others.example/', title: 'More shops', snippet: '' },
+      ]);
+    const result = await collectData(
+      'Find 3 TV shops in Pune',
+      wanted,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.records.map(row => row.name)).toEqual(['Orbit', 'Nova', 'Lumen']);
+    expect(result.report.coverage).toBe('requested_count_reached');
+    const recovery = (s.llm.complete as jest.Mock).mock.calls.find(([system]) =>
+      system.startsWith('Plan recovery')
+    );
+    expect(JSON.parse(recovery[1])).toMatchObject({
+      remaining_records: 2,
+      accepted_entities: [{ name: 'Orbit' }],
+      partial_entities: [],
+    });
+  });
+
+  it('preserves the original relationship quote when an observed link has the same name', async () => {
+    const s = setup(
+      [
+        { queries: [], identity_fields: ['name'] },
+        {
+          records: [
+            {
+              ...record('Orbit', '02012345678'),
+              evidence: { name: 'Our TV shop is named Orbit', phone: '02012345678' },
+            },
+          ],
+        },
+      ],
+      {
+        'https://shops.example/':
+          '<p>Our TV shop is named Orbit. Phone 02012345678</p><a href="/team">Orbit</a>',
+      }
+    );
+    const result = await collectData(
+      'Collect TV shop from https://shops.example/',
+      objective,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(
+      (result.records[0]._collection_evidence as Record<string, { quote: string }>).name.quote
+    ).toBe('Our TV shop is named Orbit');
+  });
   it('never crawls search hits rejected by ranking, including small result sets', async () => {
     const s = setup([], { 'https://shops.example/': '<p>Orbit TV Shop 020 1234 5678</p>' });
     s.dependencies.search = jest.fn().mockResolvedValue([
@@ -101,6 +401,14 @@ describe('General collection and evidence contracts', () => {
       .mockResolvedValueOnce(JSON.stringify({ preferred_sources: [1, 500, '0'] }))
       .mockResolvedValueOnce(
         JSON.stringify({ records: [record('Orbit TV Shop', '020 1234 5678')] })
+      )
+      .mockResolvedValueOnce(
+        JSON.stringify({
+          entity_supported: true,
+          supported_fields: ['name', 'phone'],
+          supported_requirements: [],
+          issues: [],
+        })
       );
     const result = await collectData(
       'Find TV shops Pune',

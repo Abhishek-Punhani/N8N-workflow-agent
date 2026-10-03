@@ -10,6 +10,19 @@
 .collection-summary li a { display: block; overflow-wrap: anywhere; }
 .collection-summary li span { font-size: 13px; color: #67625b; }
 .collection-warning { color: #875320; }
+.status.partial { color: #98662d; background: #fbf3e5; border-color: #e6d2ad; }
+.collection-progress { width: 100%; height: 7px; accent-color: #a87650; margin: 8px 0; }
+.collection-outcome { color: #775c3a; }
+.collection-metrics { display: grid; grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); gap: 12px; padding: 16px 0; border-bottom: 1px solid #e4ded2; }
+.collection-metrics span { font-size: 11px; color: #8e8171; }
+.collection-metrics strong { display: block; font-size: 17px; color: #665749; margin-bottom: 5px; }
+.collection-current { display: flex; flex-direction: column; gap: 8px; padding: 16px; background: #f3eee3; border-radius: 8px; margin-top: 16px; overflow-wrap: anywhere; font-size: 13px; }
+.collection-current strong, .collection-events strong { text-transform: capitalize; }
+.collection-events { padding: 0; list-style: none; }
+.collection-events li { display: flex; gap: 16px; border-bottom: 1px solid #e9e2d6; }
+.collection-events time { font-size: 10px; white-space: nowrap; color: #9b8c78; padding-top: 3px; }
+.collection-events li div { min-width: 0; display: flex; flex-direction: column; gap: 5px; font-size: 12px; overflow-wrap: anywhere; }
+.collection-summary li > strong, .collection-summary li > span { display: block; }
 .field-evidence > div { margin-top: 18px; }
 .field-evidence blockquote { margin: 8px 0; padding-left: 12px; border-left: 2px solid #bd7355; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 .field-evidence small { display: block; margin-top: 5px; color: #67625b; }

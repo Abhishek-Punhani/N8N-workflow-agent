@@ -192,6 +192,7 @@ export function validateRecords(
       qualification_evidence: record._qualification_evidence ?? [],
       dedupe_group: fingerprint,
       validation_status: 'valid',
+      evidence_review: record._evidence_review ?? null,
     };
     unique.set(fingerprint, output);
   }

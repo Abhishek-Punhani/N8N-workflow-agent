@@ -185,6 +185,7 @@ export function createApi(store: Store, config: AppConfig, token: string) {
           let artifacts: Record<string, unknown> | undefined;
           if (checkpoint && job.artifacts?.objective && job.artifacts.collection_version === 2) {
             const retry = structuredClone(checkpoint);
+            retry.discovery_rounds = 0;
             // A user-initiated retry grants a fresh run budget while retaining evidence.
             retry.report = {
               ...retry.report,
@@ -195,6 +196,8 @@ export function createApi(store: Store, config: AppConfig, token: string) {
               stop_reason: undefined,
               warnings: [],
               sources: [],
+              events: [],
+              activity: undefined,
             };
             if (!retry.queue.length) {
               const failed = checkpoint.report.sources.filter(

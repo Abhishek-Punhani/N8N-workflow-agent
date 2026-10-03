@@ -1,0 +1,262 @@
+{
+  "job": {
+    "prompt": "From https://books.toscrape.com/ collect 3 books. Return title and price. Use complete book titles and include source evidence.",
+    "status": "completed",
+    "collection": {
+      "phase": "finished",
+      "events": [
+        {
+          "at": "2026-10-03T11:22:24.978Z",
+          "url": "https://books.toscrape.com/",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:22:26.740Z",
+          "url": "https://books.toscrape.com/",
+          "kind": "extracting",
+          "message": "Extracting source-backed fields and following relevant links"
+        },
+        {
+          "at": "2026-10-03T11:22:27.849Z",
+          "kind": "verifying",
+          "message": "Checking entity, field relationships and qualifications: A Light in the Attic"
+        },
+        {
+          "at": "2026-10-03T11:22:51.375Z",
+          "kind": "accepted",
+          "message": "Accepted A Light in the Attic"
+        },
+        {
+          "at": "2026-10-03T11:22:51.378Z",
+          "kind": "verifying",
+          "message": "Checking entity, field relationships and qualifications: Tipping the Velvet"
+        },
+        {
+          "at": "2026-10-03T11:22:52.112Z",
+          "kind": "accepted",
+          "message": "Accepted Tipping the Velvet"
+        },
+        {
+          "at": "2026-10-03T11:22:52.123Z",
+          "kind": "verifying",
+          "message": "Checking entity, field relationships and qualifications: Set Me Free"
+        },
+        {
+          "at": "2026-10-03T11:22:52.411Z",
+          "kind": "accepted",
+          "message": "Accepted Set Me Free"
+        },
+        {
+          "at": "2026-10-03T11:22:52.422Z",
+          "kind": "finished",
+          "message": "3 of 3 records accepted; requested count reached"
+        }
+      ],
+      "budgets": {
+        "pages": 30,
+        "seconds": 600,
+        "model_calls": 80
+      },
+      "queries": [],
+      "sources": [
+        {
+          "url": "https://books.toscrape.com/",
+          "state": "available",
+          "records": 3
+        }
+      ],
+      "activity": {
+        "at": "2026-10-03T11:22:52.422Z",
+        "kind": "finished",
+        "message": "3 of 3 records accepted; requested count reached"
+      },
+      "coverage": "requested_count_reached",
+      "warnings": [],
+      "elapsed_ms": 27636,
+      "started_at": "2026-10-03T11:22:24.787Z",
+      "model_calls": 5,
+      "stop_reason": "requested_count_reached",
+      "requirements": [
+        "book",
+        "Available on https://books.toscrape.com/"
+      ],
+      "pages_visited": 1,
+      "queued_sources": 0,
+      "accepted_records": 3,
+      "candidate_issues": [],
+      "rejected_records": 0,
+      "candidate_records": 3,
+      "requested_records": 3
+    },
+    "started_at": "2026-10-03T11:22:23.191Z",
+    "duration_ms": 30066,
+    "workflow_id": "b7UaOuaFRv7PZyMr",
+    "completed_at": "2026-10-03T11:22:53.257Z",
+    "execution_id": "1575b850-2d1b-4773-90a8-86b5281ad257",
+    "records_processed": 3,
+    "verification_stages": [
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:22:24.783Z",
+        "stage_name": "Intake"
+      },
+      {
+        "status": "success",
+        "message": "finished: 1 pages, 3 accepted records",
+        "timestamp": "2026-10-03T11:22:52.425Z",
+        "stage_name": "Plan"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:22:52.428Z",
+        "stage_name": "Structure"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:22:52.430Z",
+        "stage_name": "Compile"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:22:52.433Z",
+        "stage_name": "Contract"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:22:52.849Z",
+        "stage_name": "Sandbox"
+      },
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:22:53.255Z",
+        "stage_name": "Run"
+      }
+    ]
+  },
+  "records": [
+    {
+      "price": 51.77,
+      "title": "A Light in the Attic",
+      "_provenance": {
+        "source_url": "https://books.toscrape.com/",
+        "dedupe_group": "e44ac0855ec55be1e3ba92951d39a0649a1c291b95802fa750d0aee3c65e8ec0",
+        "field_evidence": {
+          "price": {
+            "quote": "A Light in the ... £51.77 In stock Add to basket",
+            "method": "html",
+            "context": "me All products 1000 results - showing 1 to 20. Warning! This is a demo website for web scraping purposes. Prices and ratings here were randomly assigned and have no real meaning. A Light in the ... £51.77 In stock Add to basket Tipping the Velvet £53.74 In stock Add to basket Soum ... Add to basket Set Me Free £17.46 In stock Add to basket Scott Pilgrim's Precious Little ... £52.29 In stock Add to basket Rip it Up and ... £35.02 In stock Add t",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-03T11:22:27.837Z"
+          },
+          "title": {
+            "quote": "Observed link: A Light in the Attic https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html",
+            "method": "html",
+            "context": "pe.com/catalogue/category/books/food-and-drink_33/index.html Observed link: Rip it Up and Start Again https://books.toscrape.com/catalogue/rip-it-up-and-start-again_986/index.html Observed link: A Light in the Attic https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html Observed link: Tipping the Velvet https://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html Observed link: The Requiem Red https://books.toscrape.com/catalogue/the-requiem-red_995/index.html Observed link: ",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-03T11:22:27.837Z"
+          }
+        },
+        "evidence_review": {
+          "method": "model_evidence_review",
+          "accepted": true
+        },
+        "confidence_method": "not_calibrated",
+        "validation_status": "valid",
+        "extraction_confidence": null,
+        "qualification_evidence": [
+          {
+            "quote": "All products 1000 results - showing 1 to 20.",
+            "method": "html",
+            "context": "hristian Fiction Business Biography Thriller Contemporary Spirituality Academic Self Help Historical Christian Suspense Short Stories Novels Health Politics Cultural Erotica Crime All products 1000 results - showing 1 to 20. Warning! This is a demo website for web scraping purposes. Prices and ratings here were randomly assigned and have no real meaning. A Light in the ... £51.77 In stock Add to basket Tipping the Velvet £53.74 In stock Add",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-03T11:22:27.837Z",
+            "requirement_index": 0
+          }
+        ]
+      }
+    },
+    {
+      "price": 53.74,
+      "title": "Tipping the Velvet",
+      "_provenance": {
+        "source_url": "https://books.toscrape.com/",
+        "dedupe_group": "2ef9bcfe7edb48939dc23768cd1a514d591da07de44681573a11530ede87b178",
+        "field_evidence": {
+          "price": {
+            "quote": "Tipping the Velvet £53.74 In stock Add to basket",
+            "method": "html",
+            "context": "arning! This is a demo website for web scraping purposes. Prices and ratings here were randomly assigned and have no real meaning. A Light in the ... £51.77 In stock Add to basket Tipping the Velvet £53.74 In stock Add to basket Soum ... Add to basket Set Me Free £17.46 In stock Add to basket Scott Pilgrim's Precious Little ... £52.29 In stock Add to basket Rip it Up and ... £35.02 In stock Add to basket Our Band Could Be ... £57.25 In stock Ad",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-03T11:22:27.837Z"
+          },
+          "title": {
+            "quote": "Tipping the Velvet £53.74 In stock Add to basket",
+            "method": "html",
+            "context": "arning! This is a demo website for web scraping purposes. Prices and ratings here were randomly assigned and have no real meaning. A Light in the ... £51.77 In stock Add to basket Tipping the Velvet £53.74 In stock Add to basket Soum ... Add to basket Set Me Free £17.46 In stock Add to basket Scott Pilgrim's Precious Little ... £52.29 In stock Add to basket Rip it Up and ... £35.02 In stock Add to basket Our Band Could Be ... £57.25 In stock Ad",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-03T11:22:27.837Z"
+          }
+        },
+        "evidence_review": {
+          "method": "model_evidence_review",
+          "accepted": true
+        },
+        "confidence_method": "not_calibrated",
+        "validation_status": "valid",
+        "extraction_confidence": null,
+        "qualification_evidence": [
+          {
+            "quote": "All products 1000 results - showing 1 to 20.",
+            "method": "html",
+            "context": "hristian Fiction Business Biography Thriller Contemporary Spirituality Academic Self Help Historical Christian Suspense Short Stories Novels Health Politics Cultural Erotica Crime All products 1000 results - showing 1 to 20. Warning! This is a demo website for web scraping purposes. Prices and ratings here were randomly assigned and have no real meaning. A Light in the ... £51.77 In stock Add to basket Tipping the Velvet £53.74 In stock Add",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-03T11:22:27.837Z",
+            "requirement_index": 0
+          }
+        ]
+      }
+    },
+    {
+      "price": 17.46,
+      "title": "Set Me Free",
+      "_provenance": {
+        "source_url": "https://books.toscrape.com/",
+        "dedupe_group": "5cac55ce12421751377c1f3bef1ea90069b9848e3894f92b90a8725b426d1e00",
+        "field_evidence": {
+          "price": {
+            "quote": "Set Me Free £17.46 In stock Add to basket",
+            "method": "html",
+            "context": "ings here were randomly assigned and have no real meaning. A Light in the ... £51.77 In stock Add to basket Tipping the Velvet £53.74 In stock Add to basket Soum ... Add to basket Set Me Free £17.46 In stock Add to basket Scott Pilgrim's Precious Little ... £52.29 In stock Add to basket Rip it Up and ... £35.02 In stock Add to basket Our Band Could Be ... £57.25 In stock Add to basket Olio £23.88 In stock Add to basket Mesaerion: The Bes",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-03T11:22:27.837Z"
+          },
+          "title": {
+            "quote": "Set Me Free £17.46 In stock Add to basket",
+            "method": "html",
+            "context": "ings here were randomly assigned and have no real meaning. A Light in the ... £51.77 In stock Add to basket Tipping the Velvet £53.74 In stock Add to basket Soum ... Add to basket Set Me Free £17.46 In stock Add to basket Scott Pilgrim's Precious Little ... £52.29 In stock Add to basket Rip it Up and ... £35.02 In stock Add to basket Our Band Could Be ... £57.25 In stock Add to basket Olio £23.88 In stock Add to basket Mesaerion: The Bes",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-03T11:22:27.837Z"
+          }
+        },
+        "evidence_review": {
+          "method": "model_evidence_review",
+          "accepted": true
+        },
+        "confidence_method": "not_calibrated",
+        "validation_status": "valid",
+        "extraction_confidence": null,
+        "qualification_evidence": [
+          {
+            "quote": "All products 1000 results - showing 1 to 20.",
+            "method": "html",
+            "context": "hristian Fiction Business Biography Thriller Contemporary Spirituality Academic Self Help Historical Christian Suspense Short Stories Novels Health Politics Cultural Erotica Crime All products 1000 results - showing 1 to 20. Warning! This is a demo website for web scraping purposes. Prices and ratings here were randomly assigned and have no real meaning. A Light in the ... £51.77 In stock Add to basket Tipping the Velvet £53.74 In stock Add",
+            "source_url": "https://books.toscrape.com/",
+            "retrieved_at": "2026-10-03T11:22:27.837Z",
+            "requirement_index": 0
+          }
+        ]
+      }
+    }
+  ]
+}

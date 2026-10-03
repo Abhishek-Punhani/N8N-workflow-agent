@@ -1,0 +1,258 @@
+{
+  "job": {
+    "error": "No evidence-backed records satisfied the requested fields. Source exceeds the 3000000 byte acquisition limit",
+    "prompt": "Find 2 TV retailers physically located in Pune, India. Return name, full street address and publicly listed business phone as fields named name, address, phone. Include source evidence. A city name alone is not a street address.",
+    "status": "failed",
+    "collection": {
+      "phase": "finished",
+      "events": [
+        {
+          "at": "2026-10-03T11:17:31.398Z",
+          "kind": "searching",
+          "message": "TV retailers in Pune India full street address and business phone number"
+        },
+        {
+          "at": "2026-10-03T11:17:32.281Z",
+          "kind": "searching",
+          "message": "electronics stores in Pune selling TVs official website contact address"
+        },
+        {
+          "at": "2026-10-03T11:17:32.650Z",
+          "kind": "searching",
+          "message": "TV shop locations in Pune with complete address and phone number"
+        },
+        {
+          "at": "2026-10-03T11:17:33.025Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 15 search results"
+        },
+        {
+          "at": "2026-10-03T11:17:47.448Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 3 search results"
+        },
+        {
+          "at": "2026-10-03T11:17:47.626Z",
+          "url": "https://www.vijaysales.com/",
+          "kind": "reading",
+          "message": "Reading source and checking access rules"
+        },
+        {
+          "at": "2026-10-03T11:18:17.499Z",
+          "url": "https://www.vijaysales.com/",
+          "kind": "source_unavailable",
+          "message": "Source exceeds the 3000000 byte acquisition limit"
+        },
+        {
+          "at": "2026-10-03T11:18:17.856Z",
+          "kind": "searching",
+          "message": "site:justdial.com TV shop Pune address phone"
+        },
+        {
+          "at": "2026-10-03T11:18:18.328Z",
+          "kind": "searching",
+          "message": "site:yellowpages.in electronics store Pune TV address phone"
+        },
+        {
+          "at": "2026-10-03T11:18:18.689Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 15 search results"
+        },
+        {
+          "at": "2026-10-03T11:18:18.916Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 2 search results"
+        },
+        {
+          "at": "2026-10-03T11:18:19.498Z",
+          "kind": "searching",
+          "message": "TV shop Pune \"address\" \"phone\" -site:jiotv.com -site:croma.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com"
+        },
+        {
+          "at": "2026-10-03T11:18:20.537Z",
+          "kind": "searching",
+          "message": "electronics store Pune \"TV\" \"contact\" \"address\" -site:justdial.com -site:yellowpages.in -site:vijaysales.com"
+        },
+        {
+          "at": "2026-10-03T11:18:24.981Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 15 search results"
+        },
+        {
+          "at": "2026-10-03T11:18:25.250Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 2 search results"
+        },
+        {
+          "at": "2026-10-03T11:18:44.139Z",
+          "kind": "searching",
+          "message": "Pune TV dealer \"address\" \"phone\" -site:jiotv.com -site:croma.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com -site:justdial.com -site:yellowpages.in -site:vijaysales.com"
+        },
+        {
+          "at": "2026-10-03T11:18:44.484Z",
+          "kind": "searching",
+          "message": "site:indiamart.com TV shop Pune \"address\" \"phone\""
+        },
+        {
+          "at": "2026-10-03T11:18:45.111Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 15 search results"
+        },
+        {
+          "at": "2026-10-03T11:18:57.487Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 4 search results"
+        },
+        {
+          "at": "2026-10-03T11:19:18.490Z",
+          "kind": "searching",
+          "message": "Pune \"TV\" \"shop\" OR \"store\" \"address\" \"phone\" -site:flipkart.com -site:croma.com -site:jiotv.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com -site:justdial.com -site:yellowpages.in -site:vijaysales.com -site:indiamart.com"
+        },
+        {
+          "at": "2026-10-03T11:19:18.945Z",
+          "kind": "searching",
+          "message": "site:localbusiness.com OR site:indiainfo.com OR site:yellowpages.in \"Pune\" \"TV\" \"address\" \"phone\""
+        },
+        {
+          "at": "2026-10-03T11:19:19.318Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 10 search results"
+        },
+        {
+          "at": "2026-10-03T11:19:45.525Z",
+          "kind": "searching",
+          "message": "site:justdial.com OR site:indiamart.com \"Pune\" \"TV\" \"address\" \"phone\" -site:jiotv.com -site:croma.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com"
+        },
+        {
+          "at": "2026-10-03T11:19:46.089Z",
+          "kind": "searching",
+          "message": "\"Pune\" \"TV\" \"shop\" OR \"store\" \"address\" \"phone\" -site:flipkart.com -site:croma.com -site:jiotv.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com -site:justdial.com -site:yellowpages.in -site:vijaysales.com -site:indiamart.com"
+        },
+        {
+          "at": "2026-10-03T11:19:46.417Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 10 search results"
+        },
+        {
+          "at": "2026-10-03T11:20:14.508Z",
+          "kind": "searching",
+          "message": "site:justdial.com \"TV\" \"Pune\" \"address\" \"phone\" -site:jiotv.com -site:croma.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com -site:flipkart.com"
+        },
+        {
+          "at": "2026-10-03T11:20:14.887Z",
+          "kind": "searching",
+          "message": "site:indiamart.com \"TV\" \"Pune\" \"address\" \"phone\" -site:jiotv.com -site:croma.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com -site:flipkart.com"
+        },
+        {
+          "at": "2026-10-03T11:20:15.272Z",
+          "kind": "ranking",
+          "message": "Selecting relevant sources from 9 search results"
+        },
+        {
+          "at": "2026-10-03T11:20:23.627Z",
+          "kind": "finished",
+          "message": "0 of 2 records accepted; sources exhausted"
+        }
+      ],
+      "budgets": {
+        "pages": 30,
+        "seconds": 600,
+        "model_calls": 80
+      },
+      "queries": [
+        "TV retailers in Pune India full street address and business phone number",
+        "electronics stores in Pune selling TVs official website contact address",
+        "TV shop locations in Pune with complete address and phone number",
+        "site:justdial.com TV shop Pune address phone",
+        "site:yellowpages.in electronics store Pune TV address phone",
+        "TV shop Pune \"address\" \"phone\" -site:jiotv.com -site:croma.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com",
+        "electronics store Pune \"TV\" \"contact\" \"address\" -site:justdial.com -site:yellowpages.in -site:vijaysales.com",
+        "Pune TV dealer \"address\" \"phone\" -site:jiotv.com -site:croma.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com -site:justdial.com -site:yellowpages.in -site:vijaysales.com",
+        "site:indiamart.com TV shop Pune \"address\" \"phone\"",
+        "Pune \"TV\" \"shop\" OR \"store\" \"address\" \"phone\" -site:flipkart.com -site:croma.com -site:jiotv.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com -site:justdial.com -site:yellowpages.in -site:vijaysales.com -site:indiamart.com",
+        "site:localbusiness.com OR site:indiainfo.com OR site:yellowpages.in \"Pune\" \"TV\" \"address\" \"phone\"",
+        "site:justdial.com OR site:indiamart.com \"Pune\" \"TV\" \"address\" \"phone\" -site:jiotv.com -site:croma.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com",
+        "\"Pune\" \"TV\" \"shop\" OR \"store\" \"address\" \"phone\" -site:flipkart.com -site:croma.com -site:jiotv.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com -site:justdial.com -site:yellowpages.in -site:vijaysales.com -site:indiamart.com",
+        "site:justdial.com \"TV\" \"Pune\" \"address\" \"phone\" -site:jiotv.com -site:croma.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com -site:flipkart.com",
+        "site:indiamart.com \"TV\" \"Pune\" \"address\" \"phone\" -site:jiotv.com -site:croma.com -site:yupptv.com -site:zee5.com -site:sonyliv.com -site:indiatv.in -site:smartprix.com -site:flipkart.com"
+      ],
+      "sources": [
+        {
+          "url": "https://www.vijaysales.com/",
+          "state": "unavailable",
+          "message": "Source exceeds the 3000000 byte acquisition limit",
+          "records": 0
+        }
+      ],
+      "activity": {
+        "at": "2026-10-03T11:20:23.627Z",
+        "kind": "finished",
+        "message": "0 of 2 records accepted; sources exhausted"
+      },
+      "coverage": "partial",
+      "warnings": [
+        "Search engine brave unavailable: too many requests. Search coverage may be reduced.",
+        "Search engine duckduckgo unavailable: CAPTCHA. Search coverage may be reduced.",
+        "Search engine google unavailable: access denied. Search coverage may be reduced.",
+        "Search engine brave unavailable: Suspended: too many requests. Search coverage may be reduced.",
+        "Search engine google unavailable: Suspended: access denied. Search coverage may be reduced.",
+        "Collected 0 of 2 requested records; sources exhausted"
+      ],
+      "elapsed_ms": 187728,
+      "model_calls": 18,
+      "stop_reason": "sources_exhausted",
+      "requirements": [
+        "TV retailers",
+        "Physically located in Pune, India",
+        "Sells TVs"
+      ],
+      "pages_visited": 1,
+      "queued_sources": 0,
+      "accepted_records": 0,
+      "candidate_issues": [],
+      "rejected_records": 0,
+      "candidate_records": 0,
+      "requested_records": 2
+    },
+    "started_at": "2026-10-03T11:17:09.327Z",
+    "duration_ms": 194302,
+    "workflow_id": null,
+    "completed_at": "2026-10-03T11:20:23.629Z",
+    "execution_id": "93c4b28d-f9a3-4342-98d8-6ea1deb41103",
+    "records_processed": 0,
+    "verification_stages": [
+      {
+        "status": "success",
+        "timestamp": "2026-10-03T11:17:15.888Z",
+        "stage_name": "Intake"
+      },
+      {
+        "status": "failed",
+        "message": "No evidence-backed records satisfied the requested fields. Source exceeds the 3000000 byte acquisition limit",
+        "timestamp": "2026-10-03T11:17:15.898Z",
+        "stage_name": "Plan"
+      },
+      {
+        "status": "pending",
+        "stage_name": "Structure"
+      },
+      {
+        "status": "pending",
+        "stage_name": "Compile"
+      },
+      {
+        "status": "pending",
+        "stage_name": "Contract"
+      },
+      {
+        "status": "pending",
+        "stage_name": "Sandbox"
+      },
+      {
+        "status": "pending",
+        "stage_name": "Run"
+      }
+    ]
+  },
+  "records": []
+}
