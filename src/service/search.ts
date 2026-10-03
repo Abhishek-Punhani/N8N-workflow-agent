@@ -25,7 +25,8 @@ export function searchConfig(): SearchConfig {
 export async function searchWeb(
   query: string,
   signal: AbortSignal,
-  config = searchConfig()
+  config = searchConfig(),
+  onWarning?: (message: string) => void
 ): Promise<SearchHit[]> {
   const headers: Record<string, string> = { accept: 'application/json' };
   let url: URL;
@@ -73,6 +74,15 @@ export async function searchWeb(
     unresponsive_engines?: unknown[];
   };
   const hits: SearchHit[] = [];
+  if (config.provider === 'searxng' && Array.isArray(data.unresponsive_engines)) {
+    for (const engine of data.unresponsive_engines.slice(0, 10)) {
+      if (!Array.isArray(engine) || typeof engine[0] !== 'string' || typeof engine[1] !== 'string')
+        continue;
+      onWarning?.(
+        `Search engine ${engine[0].slice(0, 60)} unavailable: ${engine[1].slice(0, 120)}. Search coverage may be reduced.`
+      );
+    }
+  }
   for (const value of (config.provider === 'brave' ? data.web?.results : data.results) ?? []) {
     if (!value || typeof value !== 'object') continue;
     const r = value as Record<string, unknown>;

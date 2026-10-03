@@ -31,6 +31,20 @@ Inspect a record to see field evidence, retrieval time and the source page. Down
 
 Compose provides a private SearXNG service and enables Google, Bing, Brave and DuckDuckGo engines. Upstream search engines can block or throttle a self-hosted instance. Search results are navigation hints; their snippets are not accepted as final dataset evidence. There is no automatic switch to another provider.
 
+Unavailable upstream engines are shown as collection warnings even when other engines return results. Groq failures include a sanitized provider error code; raw provider messages and failed generations are not exposed. If the model stops collection, the final error identifies that dependency failure instead of implying that no matching entities exist.
+
+Groq JSON-validation rejections receive at most one retry with an explicit object-format instruction, within the client's existing three-attempt ceiling. The configured model and output-token allowance stay unchanged. Persistent failures remain explicit errors.
+
+Search results pass a relevance selection before entering the crawl queue, including results from recovery searches. Unselected hits are not crawled. Discovery can make up to two recovery rounds when sources are exhausted or collection has made several attempts without reaching the requested count, even if no candidate has been found. Recovery receives the original qualifications, previous queries, source failures and missing fields. The frontier favors diversity across recently attempted hosts. Known robots exclusions are reported without another page attempt; the rule applies to each URL path, not an entire domain indiscriminately.
+
+For professional research, a requested LinkedIn/profile URL can be supported by a link on an official team or company page. Fetching the profile itself is not required. Contact details must be explicitly published for business use and attributed correctly: a shared company mailbox or switchboard is not a founder's direct contact. Private personal contact enrichment is outside this collector's scope.
+
+Requested fields remain mandatory unless the prompt explicitly allows missing values. For example:
+
+> Find up to 3 startups based in Bengaluru working on both AI and blockchain. Return company name, founder name, official website, and founder LinkedIn URL where linked from public official pages. Include a company business email and company phone only if published for business enquiries; leave missing contacts blank. Preserve source evidence for location, AI and blockchain activity.
+
+This is a narrow intersection and may legitimately produce no qualifying records. A missing required profile or qualification still prevents acceptance. Collection warnings identify missing required fields for partial candidates; the service does not invent contacts or weaken qualifications to make a run succeed.
+
 Optional API connectors:
 
 ```dotenv

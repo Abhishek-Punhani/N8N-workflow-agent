@@ -20,6 +20,7 @@ export class GroqLLMClient implements LLMClient {
   ): Promise<string> {
     signal.throwIfAborted();
     let response!: Response;
+    let retriedJson = false;
     for (let attempt = 0; attempt < 3; attempt++) {
       response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -31,7 +32,14 @@ export class GroqLLMClient implements LLMClient {
         body: JSON.stringify({
           model: this.modelName,
           messages: [
-            { role: 'system', content: systemPrompt },
+            {
+              role: 'system',
+              content:
+                systemPrompt +
+                (retriedJson
+                  ? '\nYour previous response failed JSON validation. Return exactly one valid JSON object using the requested schema. Empty results must be arrays inside that object, never a top-level array. Do not include markdown or explanatory text.'
+                  : ''),
+            },
             { role: 'user', content: userMessage },
           ],
           temperature: 0.1,
@@ -39,6 +47,17 @@ export class GroqLLMClient implements LLMClient {
           response_format: { type: 'json_object' },
         }),
       });
+      if (response.status === 400 && !retriedJson && attempt < 2) {
+        const failure = (await response
+          .clone()
+          .json()
+          .catch(() => null)) as { error?: { code?: unknown } } | null;
+        if (failure?.error?.code === 'json_validate_failed') {
+          retriedJson = true;
+          await response.body?.cancel();
+          continue;
+        }
+      }
       if ((response.status < 500 && response.status !== 429) || attempt === 2) break;
       const retry = Number(response.headers.get('retry-after'));
       await response.body?.cancel();
@@ -54,8 +73,18 @@ export class GroqLLMClient implements LLMClient {
       );
     }
 
-    if (!response.ok)
-      throw new Error(`Groq request failed (HTTP ${response.status}, model ${this.modelName})`);
+    if (!response.ok) {
+      // Codes are actionable; raw messages/failed generations may echo source or user data.
+      const failure = (await response.json().catch(() => null)) as {
+        error?: { code?: unknown };
+      } | null;
+      const code = failure?.error?.code;
+      const detail =
+        typeof code === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(code) ? `, code ${code}` : '';
+      throw new Error(
+        `Groq request failed (HTTP ${response.status}, model ${this.modelName}${detail})`
+      );
+    }
 
     const body = (await response.json()) as {
       choices?: Array<{ finish_reason?: string; message?: { content?: string } }>;

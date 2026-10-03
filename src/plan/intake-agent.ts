@@ -189,7 +189,7 @@ OUTPUT SCHEMA (respond with ONLY valid JSON, no markdown, no explanation):
     {
       "name": string,
       "type": "string" | "number" | "date" | "url" | "email" | "array" | "object",
-      "required": true,
+      "required": boolean,         // false only when the user allows missing values
       "description": string | null
     }
   ],
@@ -220,7 +220,8 @@ RULES:
 7. Put record counts ONLY in output_requirements.max_records, not in constraints. Constraints are row field predicates.
 8. A supplied JSON API URL and explicit fields are sufficient; do not request clarification about obvious field meanings.
 9. Put semantic entity/geographic conditions (for example sells TVs, located in Pune India) in qualification_requirements. Do not invent hidden location.city, location.country or category predicates when these are not requested output fields. Constraints are explicit row-field predicates (for example userId equals 1 or price less than 500). Preserve every semantic qualification as a requirement needing source evidence.
-10. Evidence/provenance is platform metadata. Do not add a source_evidence dataset field unless the user explicitly requests that named field. Business phone numbers are strings, never numeric quantities.`;
+10. Evidence/provenance is platform metadata. Do not add a source_evidence dataset field unless the user explicitly requests that named field. Business phone numbers are strings, never numeric quantities.
+11. Honor explicit optionality: "if publicly available", "where available", and "leave missing contacts blank" mean those fields have required:false. Otherwise preserve requested fields as required. Never silently relax an explicit completeness requirement. For professional lead requests, contact fields mean only contacts explicitly published for business use, not private personal details. Document this interpretation in assumptions and field descriptions. Keep personal and company contacts distinct; a company switchboard is not a founder's direct phone.`;
   }
 
   /**

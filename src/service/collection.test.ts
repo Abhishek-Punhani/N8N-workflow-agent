@@ -33,9 +33,18 @@ function setup(
   overrides: Partial<CollectionOptions> = {}
 ) {
   const llm: LLMClient = {
-    complete: jest
-      .fn()
-      .mockImplementation(() => Promise.resolve(JSON.stringify(responses.shift()))),
+    complete: jest.fn().mockImplementation((system: string, data: string) => {
+      // Default ranking accepts the fixture source; individual tests override it.
+      if (system.startsWith('Rank observed'))
+        return Promise.resolve(
+          JSON.stringify({
+            preferred_sources: JSON.parse(data).candidates.map((_: unknown, id: number) => id),
+          })
+        );
+      if (system.startsWith('Plan recovery') && !responses.length)
+        return Promise.resolve(JSON.stringify({ queries: [] }));
+      return Promise.resolve(JSON.stringify(responses.shift()));
+    }),
   };
   const dependencies: CollectionDependencies = {
     fetch: jest.fn().mockImplementation((url: string) => {
@@ -80,6 +89,164 @@ const record = (name: string, phone: string) => ({
 });
 
 describe('General collection and evidence contracts', () => {
+  it('never crawls search hits rejected by ranking, including small result sets', async () => {
+    const s = setup([], { 'https://shops.example/': '<p>Orbit TV Shop 020 1234 5678</p>' });
+    s.dependencies.search = jest.fn().mockResolvedValue([
+      { url: 'https://dictionary.example/shop', title: 'Shop definition', snippet: 'Unrelated' },
+      { url: 'https://shops.example/', title: 'Orbit TV Shop Pune', snippet: 'Store contact' },
+    ]);
+    s.llm.complete = jest
+      .fn()
+      .mockResolvedValueOnce(JSON.stringify(plan))
+      .mockResolvedValueOnce(JSON.stringify({ preferred_sources: [1, 500, '0'] }))
+      .mockResolvedValueOnce(
+        JSON.stringify({ records: [record('Orbit TV Shop', '020 1234 5678')] })
+      );
+    const result = await collectData(
+      'Find TV shops Pune',
+      objective,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.records).toHaveLength(1);
+    expect(s.dependencies.fetch).not.toHaveBeenCalledWith(
+      expect.stringContaining('dictionary.example'),
+      expect.anything()
+    );
+  });
+  it('recovers from zero candidates and an exhausted blocked frontier within the same page budget', async () => {
+    const s = setup(
+      [
+        plan,
+        { queries: ['Pune TV retailers official contact'] },
+        { records: [record('Orbit TV Shop', '020 1234 5678')] },
+      ],
+      {
+        'https://official.example/': '<p>Orbit TV Shop Pune 020 1234 5678</p>',
+      },
+      { maxPages: 2 }
+    );
+    s.dependencies.search = jest
+      .fn()
+      .mockResolvedValueOnce(
+        Array.from({ length: 8 }, (_, i) => ({
+          url: `https://blocked.example/profile/${i}`,
+          title: 'TV retailer Pune',
+          snippet: '',
+        }))
+      )
+      .mockResolvedValueOnce([
+        { url: 'https://official.example/', title: 'Orbit TV Shop', snippet: 'Pune contact' },
+      ]);
+    const fetch = s.dependencies.fetch;
+    s.dependencies.fetch = jest
+      .fn()
+      .mockImplementation((url: string, signal: AbortSignal) =>
+        url === 'https://blocked.example/robots.txt'
+          ? Promise.resolve(page(url, 'User-agent: *\nDisallow: /profile/'))
+          : fetch(url, signal)
+      );
+    const result = await collectData(
+      'Find TV shops Pune',
+      objective,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.report.pages_visited).toBe(2);
+    expect(result.report.sources.filter(source => source.state === 'denied')).toHaveLength(8);
+    expect(result.records).toHaveLength(1);
+    const recovery = (s.llm.complete as jest.Mock).mock.calls.find(([system]) =>
+      system.startsWith('Plan recovery')
+    );
+    expect(JSON.parse(recovery[1])).toMatchObject({
+      partial_entities: [],
+      source_outcomes: expect.arrayContaining([expect.objectContaining({ state: 'denied' })]),
+    });
+    expect(s.dependencies.fetch).not.toHaveBeenCalledWith(
+      expect.stringContaining('/profile/'),
+      expect.anything()
+    );
+  });
+  it('replans when ranking rejects every initial result and caps empty recovery rounds', async () => {
+    const s = setup([], {});
+    s.llm.complete = jest
+      .fn()
+      .mockImplementation((system: string) =>
+        Promise.resolve(
+          JSON.stringify(
+            system.startsWith('You plan')
+              ? plan
+              : system.startsWith('Rank observed')
+                ? { preferred_sources: [] }
+                : { queries: [] }
+          )
+        )
+      );
+    await expect(
+      collectData('Find TV shops Pune', objective, s.llm, s.options, s.dependencies)
+    ).rejects.toThrow('No evidence-backed records');
+    expect(s.dependencies.fetch).not.toHaveBeenCalled();
+    expect(
+      (s.llm.complete as jest.Mock).mock.calls.filter(([system]) =>
+        system.startsWith('Plan recovery')
+      )
+    ).toHaveLength(2);
+  });
+  it('can evidence a profile link on a company page without crawling the profile', async () => {
+    const wanted: StructuredObjective = {
+      target_entity: 'company founders',
+      constraints: [],
+      required_fields: [
+        { name: 'name', type: 'string', required: true },
+        { name: 'profile', type: 'url', required: true },
+        { name: 'business_email', type: 'email', required: false },
+      ],
+      output_requirements: { max_records: 1 },
+    };
+    const profile = 'https://profiles.example/people/ada';
+    const s = setup(
+      [
+        { queries: [], identity_fields: ['name'] },
+        {
+          records: [
+            {
+              values: { name: 'Ada Example', profile },
+              evidence: { name: 'Ada Example', profile: `Observed link: Ada Example ${profile}` },
+              qualification_quotes: ['Ada Example is our founder'],
+            },
+          ],
+        },
+      ],
+      {
+        'https://official.example/team': `<p>Ada Example is our founder</p><a href="${profile}">Ada Example</a>`,
+      },
+      {
+        accept: (row, source) => {
+          try {
+            validateRecords([row], wanted, source);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+      }
+    );
+    const result = await collectData(
+      'Find founders at https://official.example/team with profiles and business email if published',
+      wanted,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.records[0]).toMatchObject({ name: 'Ada Example', profile });
+    expect(result.records[0]).not.toHaveProperty('business_email');
+    expect(s.dependencies.fetch).not.toHaveBeenCalledWith(
+      expect.stringContaining('profiles.example'),
+      expect.anything()
+    );
+  });
   it('does not accept city-only text as a business address and enriches it from an observed detail page', async () => {
     const wanted: StructuredObjective = {
       ...objective,
