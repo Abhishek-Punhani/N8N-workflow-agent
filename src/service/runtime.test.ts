@@ -1,5 +1,7 @@
 import { GeminiLLMClient } from '../plan/gemini-client';
+import { GroqLLMClient } from '../plan/groq-client';
 import { RequestRateLimiter } from '../plan/rate-limiter';
+import { createLLMClient } from '../plan/llm-registry';
 import { isPublicAddress, fetchSource } from './source';
 import { compileExecutable } from './compiler';
 import { validateRecords } from './pipeline';
@@ -47,7 +49,7 @@ describe('Production runtime safeguards', () => {
   it('quotes CSV commas, quotes and newlines', () => expect(csvCell('a,"b"\nc')).toBe('"a,""b""\nc"'));
 });
 
-describe('Gemini-only transport', () => {
+describe('LLM transport', () => {
   const originalFetch = global.fetch;
   afterEach(() => { global.fetch = originalFetch; });
   it('rejects a non-Gemini-3 model', () => expect(() => new GeminiLLMClient('test','gpt-4o')).toThrow('Gemini 3'));
@@ -69,5 +71,15 @@ describe('Gemini-only transport', () => {
     global.fetch = jest.fn(); const controller = new AbortController(); controller.abort();
     await expect(new GeminiLLMClient('test','gemini-3-flash-preview').complete('s','u',controller.signal)).rejects.toThrow();
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+  it('creates the configured Groq provider', () => {
+    const client = createLLMClient({
+      env: 'test',
+      llm: { provider: 'groq', apiKey: 'test', model: 'llama-3.3-70b-versatile' },
+      n8n: { baseUrl: 'http://localhost:5678', apiKey: 'test' },
+      limits: { maxRecords: 1, maxExportSizeMb: 1 },
+      timeouts: { llmRequestMs: 1000, n8nRequestMs: 1000 },
+    });
+    expect(client).toBeInstanceOf(GroqLLMClient);
   });
 });

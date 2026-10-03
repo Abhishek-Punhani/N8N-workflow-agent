@@ -11,7 +11,7 @@ export interface AppConfig {
   env: Environment;
 
   llm: {
-    provider: 'gemini';
+    provider: 'gemini' | 'groq';
     apiKey: string;
     model: string;
   };
@@ -40,9 +40,16 @@ export function loadConfig(): AppConfig {
   const env = (process.env.NODE_ENV || 'development') as Environment;
 
   const provider = (process.env.LLM_PROVIDER || 'gemini').toLowerCase();
-  if (provider !== 'gemini') throw new Error('LLM_PROVIDER must be gemini');
-  const apiKey = process.env.GEMINI_API_KEY || process.env.LLM_API_KEY || '';
-  const model = process.env.GEMINI_MODEL || process.env.LLM_MODEL || 'gemini-3-flash-preview';
+  if (provider !== 'gemini' && provider !== 'groq')
+    throw new Error('LLM_PROVIDER must be gemini or groq');
+  const apiKey =
+    provider === 'groq'
+      ? process.env.GROQ_API_KEY || process.env.LLM_API_KEY || ''
+      : process.env.GEMINI_API_KEY || process.env.LLM_API_KEY || '';
+  const model =
+    provider === 'groq'
+      ? process.env.GROQ_MODEL || process.env.LLM_MODEL || 'llama-3.3-70b-versatile'
+      : process.env.GEMINI_MODEL || process.env.LLM_MODEL || 'gemini-3-flash-preview';
 
   const config: AppConfig = {
     env,
@@ -73,7 +80,8 @@ export function validateConfig(config: AppConfig): void {
   const missing: string[] = [];
   if (!['development', 'staging', 'production', 'test'].includes(config.env))
     throw new Error('Invalid NODE_ENV');
-  if (config.llm.provider !== 'gemini') throw new Error('LLM_PROVIDER must be gemini');
+  if (config.llm.provider !== 'gemini' && config.llm.provider !== 'groq')
+    throw new Error('LLM_PROVIDER must be gemini or groq');
   rateLimitFromEnv('LLM_MAX_RPM', 10);
   rateLimitFromEnv('LLM_MAX_TPM', 0);
 
@@ -87,7 +95,7 @@ export function validateConfig(config: AppConfig): void {
 
   if (config.env !== 'test') {
     if (!config.llm.apiKey) {
-      missing.push('GEMINI_API_KEY');
+      missing.push(config.llm.provider === 'groq' ? 'GROQ_API_KEY' : 'GEMINI_API_KEY');
     }
     if (!config.n8n.apiKey) missing.push('N8N_API_KEY');
   }
@@ -100,6 +108,10 @@ export function validateConfig(config: AppConfig): void {
 
   if (config.llm.provider === 'gemini' && !/^gemini-3[.\w-]*$/.test(config.llm.model)) {
     throw new Error('GEMINI_MODEL must be a Gemini 3 model ID.');
+  }
+
+  if (config.llm.provider === 'groq' && !/^[a-zA-Z0-9._:/-]+$/.test(config.llm.model)) {
+    throw new Error('GROQ_MODEL must be a valid Groq model ID.');
   }
 
   if (!Number.isSafeInteger(config.limits.maxRecords) || config.limits.maxRecords <= 0) {
