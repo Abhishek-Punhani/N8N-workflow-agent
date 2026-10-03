@@ -64,7 +64,7 @@ resource "google_compute_instance" "app_instance" {
     admin_email     = var.admin_email
     # Note: For production, you should use Secret Manager for .env, 
     # but we are using file interpolation here to match the Technex setup.
-    env_content     = fileexists("${path.module}/.env.production") ? file("${path.module}/.env.production") : ""
+    env_content     = fileexists("${path.module}/.env") ? file("${path.module}/.env") : ""
   })
 
   service_account {

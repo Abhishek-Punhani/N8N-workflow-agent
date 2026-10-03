@@ -1,70 +1,89 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Redeploying N8N-Agent instance (Update Only)..."
-source source.env
+# ─────────────────────────────────────────────────────────────────────────────
+# redeploy.sh  –  SSH into the running GCP instance and hot-swap the code.
+# Run from inside the /terraform directory:
+#   ./redeploy.sh
+#
+# Prereqs:
+#   1. terraform/.env  filled with your secrets (see .env.example)
+#   2. gcloud auth application-default login   (one-time auth)
+# ─────────────────────────────────────────────────────────────────────────────
 
-# Get instance details
-INSTANCE_NAME=$(terraform output -raw instance_name)
-INSTANCE_IP=$(terraform output -raw instance_ip)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Get Zone dynamically
-ZONE=$(gcloud compute instances list --filter="name=(${INSTANCE_NAME})" --format="value(zone)" | head -n 1)
-
-if [ -z "$ZONE" ]; then
-  echo "❌ Could not find zone for instance $INSTANCE_NAME"
+# Source the main .env to pick up GCP / GitHub / app config
+if [ -f "$SCRIPT_DIR/.env" ]; then
+  set -o allexport
+  source "$SCRIPT_DIR/.env"
+  set +o allexport
+else
+  echo "❌  terraform/.env not found. Copy .env.example and fill it in."
   exit 1
 fi
 
-echo "✅ Target instance: $INSTANCE_NAME ($INSTANCE_IP) in $ZONE"
+# Validate required vars
+: "${TF_VAR_project_id:?  Set TF_VAR_project_id in terraform/.env}"
+: "${TF_VAR_instance_name:=n8n-agent-platform}"
+: "${TF_VAR_branch_name:=master}"
 
-# Helper to run SSH command
-run_ssh() {
-    gcloud compute ssh "$INSTANCE_NAME" --zone="$ZONE" --command "$1" -- -o StrictHostKeyChecking=no
-}
+echo "🚀 Redeploying N8N-Agent (instance: $TF_VAR_instance_name, branch: $TF_VAR_branch_name)..."
 
-echo "⏳ Connecting to instance..."
-if ! run_ssh "echo 'SSH Ready'" &>/dev/null; then
-    echo "❌ SSH not reachable."
-    exit 1
+# Resolve the zone dynamically from gcloud
+ZONE=$(gcloud compute instances list \
+  --project="$TF_VAR_project_id" \
+  --filter="name=($TF_VAR_instance_name)" \
+  --format="value(zone)" | head -n 1)
+
+if [ -z "$ZONE" ]; then
+  echo "❌  Could not find zone for instance '$TF_VAR_instance_name'"
+  exit 1
 fi
 
-echo "✅ SSH is ready. Running updates..."
+INSTANCE_IP=$(gcloud compute instances describe "$TF_VAR_instance_name" \
+  --project="$TF_VAR_project_id" \
+  --zone="$ZONE" \
+  --format="value(networkInterfaces[0].accessConfigs[0].natIP)")
+
+echo "✅  Instance: $TF_VAR_instance_name  |  IP: $INSTANCE_IP  |  Zone: $ZONE"
+
+# Helper
+run_ssh() {
+  gcloud compute ssh "$TF_VAR_instance_name" \
+    --project="$TF_VAR_project_id" \
+    --zone="$ZONE" \
+    --command "$1" \
+    -- -o StrictHostKeyChecking=no
+}
+
+echo "⏳  Checking SSH connectivity..."
+if ! run_ssh "echo 'SSH OK'" &>/dev/null; then
+  echo "❌  SSH not reachable. Is the instance running?"
+  exit 1
+fi
+echo "✅  SSH ready."
 
 REMOTE_CMD="
 set -e
-echo '--- Starting Update ---'
+echo '──── Starting Update ────'
 
-# Ensure we run as root
-if [ \"\$EUID\" -ne 0 ]; then
-    echo 'Switching to root for git operations...'
-    exec sudo -E bash -c \"
-        set -e
-        git config --global --add safe.directory /opt/n8n-agent
-        cd /opt/n8n-agent
-        
-        echo 'Pulling latest code...'
-        git pull origin \${TF_VAR_branch_name}
-        
-        echo 'Rebuilding and restarting containers...'
-        docker compose up -d --build --force-recreate
-        
-        echo '--- Update Complete ---'
-    \"
-else
-    git config --global --add safe.directory /opt/n8n-agent
-    cd /opt/n8n-agent
-    
-    echo 'Pulling latest code...'
-    git pull origin \${TF_VAR_branch_name}
-    
-    echo 'Rebuilding and restarting containers...'
-    docker compose up -d --build --force-recreate
-    
-    echo '--- Update Complete ---'
-fi
+sudo bash -c '
+  set -e
+  git config --global --add safe.directory /opt/n8n-agent
+  cd /opt/n8n-agent
+
+  echo \"[1/2] Pulling latest code from origin $TF_VAR_branch_name...\"
+  git pull origin $TF_VAR_branch_name
+
+  echo \"[2/2] Rebuilding and restarting containers...\"
+  docker compose up -d --build --force-recreate
+
+  echo \"──── Update Complete ────\"
+'
 "
 
 run_ssh "$REMOTE_CMD"
 
-echo "🎉 Redeploy finished successfully!"
+echo "🎉  Redeploy of $TF_VAR_instance_name finished successfully!"
+echo "🌐  App is live at: https://${TF_VAR_domain_name:-$INSTANCE_IP}"
