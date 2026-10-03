@@ -109,7 +109,7 @@ NGINXEOF
 
     ln -sf /etc/nginx/sites-available/n8n-agent /etc/nginx/sites-enabled/
     rm -f /etc/nginx/sites-enabled/default
-    service nginx restart
+    service nginx restart || service nginx start || true
 
     CRON_ENTRY="0 3 * * * certbot renew --quiet --deploy-hook 'systemctl reload nginx' >> /var/log/certbot-renew.log 2>&1"
     (crontab -l 2>/dev/null | grep -v 'certbot renew' ; echo "$CRON_ENTRY") | crontab -
