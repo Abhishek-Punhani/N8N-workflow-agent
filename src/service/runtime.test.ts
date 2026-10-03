@@ -1,4 +1,5 @@
 import { GeminiLLMClient } from '../plan/gemini-client';
+import { RequestRateLimiter } from '../plan/rate-limiter';
 import { isPublicAddress, fetchSource } from './source';
 import { compileExecutable } from './compiler';
 import { validateRecords } from './pipeline';
@@ -53,15 +54,15 @@ describe('Gemini-only transport', () => {
   it('uses native system instructions, the selected model, and request cancellation', async () => {
     global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200, json: () => Promise.resolve({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: '{"ok":true}' }] } }] }) });
     const signal = new AbortController().signal;
-    await expect(new GeminiLLMClient('test','gemini-3-flash-preview').complete('system','user',signal)).resolves.toBe('{"ok":true}');
+    await expect(new GeminiLLMClient('test','gemini-3-flash-preview', new RequestRateLimiter(0)).complete('system','user',signal)).resolves.toBe('{"ok":true}');
     const call = (global.fetch as jest.Mock).mock.calls[0];
     expect(call[0]).toContain('gemini-3-flash-preview:generateContent');
     expect(call[1].signal).toBe(signal);
     expect(JSON.parse(call[1].body).systemInstruction.parts[0].text).toBe('system');
   });
   it('does not switch models or return synthetic content on a quota error', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 429 });
-    await expect(new GeminiLLMClient('test','gemini-3-flash-preview').complete('system','user',new AbortController().signal)).rejects.toThrow('429');
+    global.fetch = jest.fn().mockResolvedValue(new Response(JSON.stringify({ error: { details: [{ violations: [{ quotaId: 'RequestsPerDay' }] }] } }), { status: 429 }));
+    await expect(new GeminiLLMClient('test','gemini-3-flash-preview', new RequestRateLimiter(0)).complete('system','user',new AbortController().signal)).rejects.toThrow('429');
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
   it('rejects already cancelled calls without making a request', async () => {

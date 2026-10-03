@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 import { DEFAULT_TIMEOUTS } from '../core/config.js';
+import { rateLimitFromEnv } from '../plan/rate-limiter.js';
 
 // Load .env if present
 dotenv.config({ quiet: true });
@@ -10,7 +11,7 @@ export interface AppConfig {
   env: Environment;
 
   llm: {
-    provider: 'gemini' | 'groq';
+    provider: 'gemini';
     apiKey: string;
     model: string;
   };
@@ -37,19 +38,11 @@ export interface AppConfig {
  */
 export function loadConfig(): AppConfig {
   const env = (process.env.NODE_ENV || 'development') as Environment;
-  
-  const provider = (process.env.LLM_PROVIDER || 'gemini').toLowerCase() as 'gemini' | 'groq';
-  
-  let apiKey = '';
-  let model = '';
-  
-  if (provider === 'groq') {
-    apiKey = process.env.GROQ_API_KEY || '';
-    model = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
-  } else {
-    apiKey = process.env.GEMINI_API_KEY || process.env.LLM_API_KEY || '';
-    model = process.env.GEMINI_MODEL || process.env.LLM_MODEL || 'gemini-3-flash-preview';
-  }
+
+  const provider = (process.env.LLM_PROVIDER || 'gemini').toLowerCase();
+  if (provider !== 'gemini') throw new Error('LLM_PROVIDER must be gemini');
+  const apiKey = process.env.GEMINI_API_KEY || process.env.LLM_API_KEY || '';
+  const model = process.env.GEMINI_MODEL || process.env.LLM_MODEL || 'gemini-3-flash-preview';
 
   const config: AppConfig = {
     env,
@@ -78,18 +71,23 @@ export function loadConfig(): AppConfig {
  */
 export function validateConfig(config: AppConfig): void {
   const missing: string[] = [];
-  if (!['development', 'staging', 'production', 'test'].includes(config.env)) throw new Error('Invalid NODE_ENV');
-  if (!['gemini', 'groq'].includes(config.llm.provider)) throw new Error('Invalid LLM_PROVIDER');
-  
+  if (!['development', 'staging', 'production', 'test'].includes(config.env))
+    throw new Error('Invalid NODE_ENV');
+  if (config.llm.provider !== 'gemini') throw new Error('LLM_PROVIDER must be gemini');
+  rateLimitFromEnv('LLM_MAX_RPM', 10);
+  rateLimitFromEnv('LLM_MAX_TPM', 0);
+
   for (const timeout of Object.values(config.timeouts)) {
-    if (!Number.isSafeInteger(timeout) || timeout <= 0) throw new Error('Timeouts must be positive integers');
+    if (!Number.isSafeInteger(timeout) || timeout <= 0)
+      throw new Error('Timeouts must be positive integers');
   }
   const url = new URL(config.n8n.baseUrl);
-  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('Invalid N8N_BASE_URL');
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password)
+    throw new Error('Invalid N8N_BASE_URL');
 
   if (config.env !== 'test') {
     if (!config.llm.apiKey) {
-      missing.push(config.llm.provider === 'groq' ? 'GROQ_API_KEY' : 'GEMINI_API_KEY');
+      missing.push('GEMINI_API_KEY');
     }
     if (!config.n8n.apiKey) missing.push('N8N_API_KEY');
   }

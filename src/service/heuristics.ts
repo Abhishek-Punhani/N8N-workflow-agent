@@ -24,17 +24,20 @@ export function intentTerms(prompt: string, objective?: StructuredObjective): st
     prompt,
     objective?.target_entity ?? '',
     ...(objective?.qualification_requirements ?? []),
+    ...(objective?.required_fields ?? []).map(
+      field => `${field.name.replace(/_/g, ' ')} ${field.description ?? ''}`
+    ),
     ...(objective?.constraints ?? []).map(c => JSON.stringify(c.value ?? '')),
   ].join(' ');
   const counts = new Map<string, number>();
   for (const term of source.toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) ?? []) {
-    if (STOPWORDS.has(term) || /^\d+$/.test(term) && term.length !== 4) continue;
+    if (STOPWORDS.has(term) || (/^\d+$/.test(term) && term.length !== 4)) continue;
     counts.set(term, (counts.get(term) ?? 0) + 1);
   }
   return [...counts.keys()];
 }
 
-// Hosts that are not citable evidence sources for general collection (social/video/Q&A).
+// These often require login or block acquisition; use a soft priority penalty.
 const LOW_VALUE_HOST =
   /(^|\.)(facebook|instagram|twitter|x|tiktok|pinterest|youtube|youtu|reddit|quora|linkedin|t)\.(com|be|co)$/i;
 
@@ -46,9 +49,14 @@ const hostOf = (url: string): string => {
   }
 };
 
-export function scoreHit(hit: SearchHit, terms: string[], position: number, seedHosts: Set<string>): number {
+export function scoreHit(
+  hit: SearchHit,
+  terms: string[],
+  position: number,
+  seedHosts: Set<string>
+): number {
   const host = hostOf(hit.url);
-  if (!host || LOW_VALUE_HOST.test(host)) return -1;
+  if (!host) return -1;
   const title = hit.title.toLowerCase();
   const rest = `${hit.snippet} ${hit.url}`.toLowerCase();
   const labels = host.split('.').flatMap(label => label.split('-'));
@@ -61,7 +69,9 @@ export function scoreHit(hit: SearchHit, terms: string[], position: number, seed
     if (term.length >= 4 && labels.includes(term)) score += 4;
   }
   if (seedHosts.has(host)) score += 10;
-  return score + Math.max(0, 3 - position * 0.1);
+  // Public social/profile pages may be the only relevant source for some requests.
+  // Deprioritize them; fetching and evidence verification determine usability.
+  return Math.max(0, score + Math.max(0, 3 - position * 0.1) - (LOW_VALUE_HOST.test(host) ? 2 : 0));
 }
 
 /** Rank search hits without a model: relevance to the request, then host diversity. */
@@ -73,24 +83,42 @@ export function rankHits(
   perHost = 3
 ): SearchHit[] {
   const seedHosts = new Set(seedUrls.map(hostOf).filter(Boolean));
+  if (limit <= 0) return [];
+  const urls = new Set<string>();
   const scored = hits
+    .filter(hit => {
+      try {
+        const url = new URL(hit.url);
+        if (url.protocol !== 'https:' || url.username || url.password) return false;
+        url.hash = '';
+        for (const key of [...url.searchParams.keys()])
+          if (/^utm_|^(fbclid|gclid)$/i.test(key)) url.searchParams.delete(key);
+        if (urls.has(url.href)) return false;
+        urls.add(url.href);
+        return true;
+      } catch {
+        return false;
+      }
+    })
     .map((hit, position) => ({ hit, score: scoreHit(hit, terms, position, seedHosts) }))
     .filter(entry => entry.score >= 0)
     .sort((a, b) => b.score - a.score);
-  const strong = scored.filter(entry => entry.score >= 3);
-  // When nothing overlaps the request, keep engine order instead of returning nothing.
-  const pool = strong.length ? strong : scored.slice(0, 5);
   const seen = new Map<string, number>();
   const out: SearchHit[] = [];
-  for (const { hit } of pool) {
+  const deferred: SearchHit[] = [];
+  for (const { hit } of scored) {
     const host = hostOf(hit.url);
     const count = seen.get(host) ?? 0;
-    if (count >= perHost) continue;
+    if (count >= perHost) {
+      deferred.push(hit);
+      continue;
+    }
     seen.set(host, count + 1);
     out.push(hit);
     if (out.length >= limit) break;
   }
-  return out;
+  // Diversity affects order, not recall when one domain holds most useful detail pages.
+  return out.concat(deferred).slice(0, limit);
 }
 
 const NAV_NOISE =
@@ -117,7 +145,7 @@ export function pickLinks(
   for (const link of links) {
     if (visited.has(link.url)) continue;
     const host = hostOf(link.url);
-    if (!host || LOW_VALUE_HOST.test(host)) continue;
+    if (!host) continue;
     let path = '';
     try {
       path = new URL(link.url).pathname;
@@ -133,9 +161,16 @@ export function pickLinks(
       else if (target.includes(term)) score += 1;
     }
     if (PAGINATION_LABEL.test(link.label.trim()) || PAGINATION_URL.test(link.url)) score += 3;
+    if (
+      /(^|[\s/_.-])(contact|about|team|careers?|jobs?|people|details?|branches|locations?)(?=$|[\s/_.-])/i.test(
+        `${link.label} ${path}`
+      )
+    )
+      score += 2;
     if (/\d/.test(path) || path.split('/').filter(Boolean).length >= 2) score += 0.5;
     if (host === origin) score += 0.5;
-    if (score >= 2) scored.push({ link, score });
+    if (LOW_VALUE_HOST.test(host)) score -= 1;
+    if (score > 0) scored.push({ link, score });
   }
   return scored
     .sort((a, b) => b.score - a.score)
@@ -153,32 +188,15 @@ const SYNONYMS: Record<string, string> = {
   title: 'name',
   headline: 'name',
   label: 'name',
-  organization: 'org',
-  organisation: 'org',
-  company: 'org',
-  employer: 'org',
-  hiring: 'org',
-  business: 'org',
-  brand: 'org',
-  publisher: 'org',
-  manufacturer: 'org',
+  organisation: 'organization',
+  telephone: 'phone',
   link: 'url',
   href: 'url',
   uri: 'url',
   website: 'url',
-  salary: 'price',
-  pay: 'price',
   cost: 'price',
-  amount: 'price',
-  wage: 'price',
-  compensation: 'price',
   summary: 'description',
   details: 'description',
-  expires: 'date',
-  deadline: 'date',
-  validthrough: 'date',
-  posted: 'date',
-  published: 'date',
 };
 // Tokens that carry no meaning of their own when they trail a more specific token.
 const NEUTRAL = new Set(['name', 'value', 'text', 'content']);
@@ -211,7 +229,7 @@ function leaves(node: Record<string, unknown>, depth = 0, prefix = ''): Leaf[] {
   for (const [key, value] of Object.entries(node)) {
     if (key.startsWith('@')) continue;
     const path = prefix ? `${prefix}.${key}` : key;
-    if (typeof value === 'string' && value.trim()) out.push({ path, key, value: value.trim() });
+    if (typeof value === 'string' && value.trim()) out.push({ path, key, value });
     else if (typeof value === 'number' && Number.isFinite(value)) out.push({ path, key, value });
     else if (value && typeof value === 'object' && !Array.isArray(value) && depth < 2)
       out.push(...leaves(value as Record<string, unknown>, depth + 1, path));
@@ -219,7 +237,10 @@ function leaves(node: Record<string, unknown>, depth = 0, prefix = ''): Leaf[] {
   return out;
 }
 
-function coerce(value: string | number, type: FieldDefinition['type']): string | number | undefined {
+function coerce(
+  value: string | number,
+  type: FieldDefinition['type']
+): string | number | undefined {
   switch (type) {
     case 'number': {
       const parsed = typeof value === 'number' ? value : Number(String(value).replace(/,/g, ''));
@@ -228,7 +249,8 @@ function coerce(value: string | number, type: FieldDefinition['type']): string |
     case 'url':
       try {
         const url = new URL(String(value));
-        return /^https?:$/.test(url.protocol) ? url.href : undefined;
+        // Preserve the literal source value so canonicalization cannot invent evidence.
+        return /^https?:$/.test(url.protocol) ? String(value) : undefined;
       } catch {
         return undefined;
       }
@@ -244,7 +266,7 @@ function coerce(value: string | number, type: FieldDefinition['type']): string |
 
 export interface StructuredRecord {
   values: Record<string, unknown>;
-  evidence: Record<string, { quote: string }>;
+  evidence: Record<string, { quote: string; context: string }>;
 }
 
 /**
@@ -276,31 +298,40 @@ export function extractStructuredRecords(
   const out: StructuredRecord[] = [];
   const seen = new Set<string>();
   let budget = 20_000;
-  const walk = (node: unknown): void => {
-    if (budget-- <= 0 || out.length >= limit || !node || typeof node !== 'object') return;
+  const walk = (node: unknown, depth = 0): void => {
+    if (depth > 30 || budget-- <= 0 || out.length >= limit || !node || typeof node !== 'object')
+      return;
     if (Array.isArray(node)) {
-      for (const item of node) walk(item);
+      for (const item of node) walk(item, depth + 1);
       return;
     }
     const object = node as Record<string, unknown>;
+    const context = JSON.stringify(object);
     const flat = leaves(object);
     const values: Record<string, unknown> = {};
-    const evidence: Record<string, { quote: string }> = {};
+    const evidence: Record<string, { quote: string; context: string }> = {};
     const usedPaths = new Set<string>();
     for (const field of fields) {
       const matches = flat
-        .filter(leaf => !usedPaths.has(leaf.path) && fieldMatchesPath(field.name, leaf.path, entityTokens))
+        .filter(
+          leaf => !usedPaths.has(leaf.path) && fieldMatchesPath(field.name, leaf.path, entityTokens)
+        )
         .sort((a, b) => a.path.length - b.path.length);
       if (!matches.length) continue;
-      // Ambiguity (same-depth leaves with different values) is never guessed.
-      if (matches.length > 1 && matches[1].path.length === matches[0].path.length && matches[1].value !== matches[0].value)
-        continue;
+      // Competing mapped values are never resolved by path length alone.
+      if (matches.some(match => match.value !== matches[0].value)) continue;
       const leaf = matches[0];
       const value = coerce(leaf.value, field.type);
       if (value === undefined) continue;
+      if (context.length > 6000) continue;
       usedPaths.add(leaf.path);
       values[field.name] = value;
-      evidence[field.name] = { quote: JSON.stringify({ [leaf.key]: leaf.value }).slice(1, -1) };
+      // Review sees the enclosing entity and nested relationships, not an isolated value.
+      // Large objects fall back to text extraction rather than truncated attribution.
+      evidence[field.name] = {
+        quote: JSON.stringify({ [leaf.key]: leaf.value }).slice(1, -1),
+        context,
+      };
     }
     if (requiredFields.every(field => values[field.name] !== undefined)) {
       const key = JSON.stringify(values);
@@ -309,7 +340,7 @@ export function extractStructuredRecords(
         out.push({ values, evidence });
       }
     }
-    for (const child of Object.values(object)) walk(child);
+    for (const child of Object.values(object)) walk(child, depth + 1);
   };
   for (const root of roots) walk(root);
   return out;

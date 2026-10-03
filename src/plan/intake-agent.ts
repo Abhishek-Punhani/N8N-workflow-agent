@@ -46,6 +46,20 @@ const TIMEOUT_MS = DEFAULT_TIMEOUTS.IntakeAgent; // 30 000 ms
  * Keeps the IntakeAgent decoupled from any specific provider.
  * Implementations: OpenAILLMClient, MockLLMClient (for tests), etc.
  */
+export interface LLMUsage {
+  requests: number;
+  retries: number;
+  inputTokens: number;
+  outputTokens: number;
+  thinkingTokens: number;
+  throttleWaitMs: number;
+}
+
+export interface LLMCompletionOptions {
+  maxOutputTokens?: number;
+  onUsage?: (usage: LLMUsage) => void;
+}
+
 export interface LLMClient {
   /**
    * Send a prompt to the LLM and return a JSON-mode response.
@@ -59,7 +73,7 @@ export interface LLMClient {
     systemPrompt: string,
     userMessage: string,
     signal: AbortSignal,
-    options?: { maxOutputTokens?: number }
+    options?: LLMCompletionOptions
   ): Promise<string>;
 }
 

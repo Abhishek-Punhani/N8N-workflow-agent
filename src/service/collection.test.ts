@@ -3,6 +3,7 @@ import {
   pageDocument,
   evidenceSupports,
   canonicalUrl,
+  candidateFingerprint,
   mergeCandidates,
   type CollectionDependencies,
   type CollectionOptions,
@@ -34,7 +35,7 @@ function setup(
 ) {
   const llm: LLMClient = {
     complete: jest.fn().mockImplementation((system: string, data: string) => {
-      // Default ranking accepts the fixture source; individual tests override it.
+      // Review fixtures preserve the independent semantic-verification contract.
       if (system.startsWith('Review extracted')) {
         const input = JSON.parse(data);
         return Promise.resolve(
@@ -49,12 +50,6 @@ function setup(
           })
         );
       }
-      if (system.startsWith('Rank observed'))
-        return Promise.resolve(
-          JSON.stringify({
-            preferred_sources: JSON.parse(data).candidates.map((_: unknown, id: number) => id),
-          })
-        );
       if (system.startsWith('Plan recovery') && !responses.length)
         return Promise.resolve(JSON.stringify({ queries: [] }));
       return Promise.resolve(JSON.stringify(responses.shift()));
@@ -103,6 +98,325 @@ const record = (name: string, phone: string) => ({
 });
 
 describe('General collection and evidence contracts', () => {
+  it('resumes the same page after a model quota failure and clears the previous stopping reason', async () => {
+    let checkpoint: CollectionOptions['checkpoint'];
+    const pages = { 'https://shops.example/': '<p>Orbit TV shop 02012345678</p>' };
+    const first = setup([{ queries: [], identity_fields: ['name'] }], pages, {
+      onProgress: (_report, state) => { checkpoint = structuredClone(state); return Promise.resolve(); },
+    });
+    const original = first.llm.complete;
+    first.llm.complete = jest.fn().mockImplementation((system: string, data: string, signal: AbortSignal) =>
+      system.startsWith('Extract') ? Promise.reject(new Error('Gemini request failed (HTTP 429)')) : original(system, data, signal)
+    );
+    await expect(collectData('Collect from https://shops.example/', objective, first.llm, first.options, first.dependencies)).rejects.toThrow('model was unavailable');
+    expect(checkpoint?.visited).not.toContain('https://shops.example/');
+    expect(checkpoint?.queue[0].url).toBe('https://shops.example/');
+    const resumed = setup([{ records: [record('Orbit', '02012345678')] }], pages, { checkpoint });
+    const result = await collectData('Collect from https://shops.example/', objective, resumed.llm, resumed.options, resumed.dependencies);
+    expect(result.records).toHaveLength(1);
+    expect(result.report.stop_reason).toBe('requested_count_reached');
+  });
+
+  it('preserves connector health across checkpoint retries without spending recovery calls', async () => {
+    const s = setup([], {}, {
+      checkpoint: {
+        queue: [], visited: [], candidates: [], plan,
+        report: { phase: 'finished', queries: plan.queries, pages_visited: 0, model_calls: 1, accepted_records: 0, rejected_records: 0, coverage: 'partial', sources: [], warnings: ['Search connector unavailable'] },
+        search_health: { attempts: 1, unavailable: 1 },
+      },
+    });
+    await expect(collectData('Find TV shops Pune', objective, s.llm, s.options, s.dependencies)).rejects.toThrow('No evidence-backed records');
+    expect(s.llm.complete).not.toHaveBeenCalled();
+  });
+
+  it('batches independent reviews and sends a shared page context only once', async () => {
+    const wanted = { ...objective, output_requirements: { max_records: 4 } };
+    const names = ['Orbit', 'Nova', 'Lumen', 'Comet'];
+    const records = names.map((name, index) => record(name, `0201234567${index}`));
+    const s = setup([{ queries: [], identity_fields: ['name'] }, { records }], {
+      'https://shops.example/':
+        '<p>' + records.map(item => `${item.values.name} ${item.values.phone}`).join('. ') + '</p>',
+    });
+    const result = await collectData(
+      'Collect 4 TV shops from https://shops.example/',
+      wanted,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.records.map(row => row.name)).toEqual(names);
+    const calls = (s.llm.complete as jest.Mock).mock.calls.filter(([system]) =>
+      system.startsWith('Review extracted')
+    );
+    expect(calls).toHaveLength(1);
+    const input = JSON.parse(calls[0][1]);
+    expect(input.source_contexts).toHaveLength(1);
+    expect(input.candidates).toHaveLength(4);
+    expect(input.candidates[0].field_evidence.phone.context_id).toBe(0);
+    expect(result.report.model_calls).toBe(3);
+  });
+
+  it('reviews non-contact fields instead of treating quote presence as attribution', async () => {
+    const wanted: StructuredObjective = {
+      target_entity: 'products',
+      constraints: [],
+      required_fields: [
+        { name: 'name', type: 'string', required: true },
+        { name: 'price', type: 'number', required: true },
+      ],
+      output_requirements: { max_records: 1 },
+    };
+    const s = setup(
+      [
+        { queries: [], identity_fields: ['name'] },
+        {
+          records: [
+            {
+              values: { name: 'Orbit', price: 99 },
+              evidence: { name: 'Orbit', price: 'Nova costs 99' },
+            },
+          ],
+        },
+      ],
+      { 'https://shops.example/': '<p>Orbit is sold out. Nova costs 99</p>' },
+      { accept: row => typeof row.name === 'string' && typeof row.price === 'number' }
+    );
+    const original = s.llm.complete;
+    s.llm.complete = jest
+      .fn()
+      .mockImplementation((system: string, data: string, signal: AbortSignal) =>
+        system.startsWith('Review extracted')
+          ? Promise.resolve(
+              JSON.stringify({
+                reviews: [
+                  {
+                    id: 0,
+                    entity_supported: true,
+                    supported_fields: ['name'],
+                    supported_requirements: [],
+                    issues: ['Price belongs to Nova'],
+                  },
+                ],
+              })
+            )
+          : original(system, data, signal)
+      );
+    await expect(
+      collectData(
+        'Collect product prices from https://shops.example/',
+        wanted,
+        s.llm,
+        s.options,
+        s.dependencies
+      )
+    ).rejects.toThrow('No evidence-backed records');
+  });
+
+  it('skips text extraction for complete structured records only after semantic review', async () => {
+    const s = setup([{ queries: [], identity_fields: ['name'] }], {
+      'https://shops.example/':
+        '<script type="application/ld+json">{"@type":"LocalBusiness","name":"Orbit","telephone":"02012345678"}</script>',
+    });
+    const result = await collectData(
+      'Collect one TV shop from https://shops.example/',
+      objective,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.records[0]).toMatchObject({
+      name: 'Orbit',
+      phone: '02012345678',
+      _evidence_review: { method: 'model_evidence_review', accepted: true },
+    });
+    expect(result.report.model_calls).toBe(2);
+    const calls = (s.llm.complete as jest.Mock).mock.calls;
+    expect(calls.some(([system]) => system.startsWith('Extract'))).toBe(false);
+    expect(JSON.parse(calls[1][1]).source_contexts[0].text).toContain('LocalBusiness');
+  });
+
+  it('falls back to text after structured data describes the wrong entity', async () => {
+    const s = setup(
+      [{ queries: [], identity_fields: ['name'] }, { records: [record('Orbit', '02012345678')] }],
+      {
+        'https://shops.example/':
+          '<p>Orbit TV shop phone 02012345678</p><script type="application/ld+json">{"@type":"Organization","name":"Publisher","telephone":"02022222222"}</script>',
+      }
+    );
+    const original = s.llm.complete;
+    s.llm.complete = jest
+      .fn()
+      .mockImplementation((system: string, data: string, signal: AbortSignal) =>
+        system.startsWith('Review extracted') &&
+        JSON.parse(data).candidates[0].values.name === 'Publisher'
+          ? Promise.resolve(
+              JSON.stringify({
+                reviews: [
+                  {
+                    id: 0,
+                    entity_supported: false,
+                    supported_fields: [],
+                    supported_requirements: [],
+                    issues: ['Publisher is not a shop'],
+                  },
+                ],
+              })
+            )
+          : original(system, data, signal)
+      );
+    const result = await collectData(
+      'Collect one TV shop from https://shops.example/',
+      objective,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.records.map(row => row.name)).toEqual(['Orbit']);
+    expect(
+      (s.llm.complete as jest.Mock).mock.calls.some(([system]) => system.startsWith('Extract'))
+    ).toBe(true);
+  });
+
+  it('retains text extraction when structured records leave a requested-count shortfall', async () => {
+    const wanted = { ...objective, output_requirements: { max_records: 2 } };
+    const s = setup(
+      [{ queries: [], identity_fields: ['name'] }, { records: [record('Nova', '02022222222')] }],
+      {
+        'https://shops.example/':
+          '<p>Nova TV shop 02022222222</p><script type="application/ld+json">{"@type":"LocalBusiness","name":"Orbit","telephone":"02012345678"}</script>',
+      }
+    );
+    const result = await collectData(
+      'Collect two TV shops from https://shops.example/',
+      wanted,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.records.map(row => row.name)).toEqual(['Orbit', 'Nova']);
+  });
+
+  it.each(['missing', 'duplicate'])(
+    'rejects %s review IDs without accepting unreviewed candidates',
+    async mode => {
+      const s = setup(
+        [{ queries: [], identity_fields: ['name'] }, { records: [record('Orbit', '02012345678')] }],
+        { 'https://shops.example/': '<p>Orbit TV shop 02012345678</p>' }
+      );
+      const original = s.llm.complete;
+      const review = {
+        id: 0,
+        entity_supported: true,
+        supported_fields: ['name', 'phone'],
+        supported_requirements: [],
+        issues: [],
+      };
+      s.llm.complete = jest
+        .fn()
+        .mockImplementation((system: string, data: string, signal: AbortSignal) =>
+          system.startsWith('Review extracted')
+            ? Promise.resolve(
+                JSON.stringify({ reviews: mode === 'duplicate' ? [review, review] : [] })
+              )
+            : original(system, data, signal)
+        );
+      await expect(
+        collectData(
+          'Collect from https://shops.example/',
+          objective,
+          s.llm,
+          s.options,
+          s.dependencies
+        )
+      ).rejects.toThrow('No evidence-backed records');
+    }
+  );
+
+  it('rechecks legacy quote-only checkpoint acceptance', async () => {
+    const evidence = {
+      source_url: 'https://shops.example/',
+      quote: 'Orbit 02012345678',
+      retrieved_at: '2026-10-03T00:00:00.000Z',
+      method: 'html' as const,
+    };
+    const candidate = {
+      values: { name: 'Orbit', phone: '02012345678' },
+      evidence: { name: evidence, phone: evidence },
+      qualification: [],
+    };
+    const s = setup(
+      [],
+      {},
+      {
+        checkpoint: {
+          queue: [],
+          visited: ['https://shops.example/'],
+          plan: { queries: [], identity_fields: ['name'] },
+          candidates: [
+            {
+              ...candidate,
+              review: {
+                fingerprint: candidateFingerprint(candidate),
+                accepted: true,
+                issues: [],
+                method: 'evidence_quote_check',
+              },
+            },
+          ],
+          report: {
+            phase: 'collecting',
+            queries: [],
+            pages_visited: 1,
+            model_calls: 0,
+            accepted_records: 1,
+            rejected_records: 0,
+            coverage: 'in_progress',
+            sources: [],
+            warnings: [],
+          },
+        },
+      }
+    );
+    const result = await collectData(
+      'Collect from https://shops.example/',
+      objective,
+      s.llm,
+      s.options,
+      s.dependencies
+    );
+    expect(result.report.model_calls).toBe(1);
+    expect(result.records[0]._evidence_review).toMatchObject({ method: 'model_evidence_review' });
+  });
+
+  it('does not spend recovery calls when the search connector is unavailable', async () => {
+    const s = setup([plan], {});
+    s.dependencies.search = jest
+      .fn()
+      .mockRejectedValue(new Error('Search connector searxng returned HTTP 429'));
+    await expect(
+      collectData('Find TV shops Pune', objective, s.llm, s.options, s.dependencies)
+    ).rejects.toThrow('No evidence-backed records');
+    expect(s.llm.complete).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves recovery when usable searches include multiple upstream warnings', async () => {
+    const s = setup([plan, { records: [] }, { queries: ['Other TV shops Pune'] }], {
+      'https://shops.example/': '<p>No matching entities here</p>',
+    });
+    s.dependencies.search = jest.fn().mockImplementation((_query, _signal, warn) => {
+      for (let index = 0; index < 5; index++) warn('Search engine ' + index + ' unavailable');
+      return Promise.resolve([{ url: 'https://shops.example/', title: 'TV shops', snippet: '' }]);
+    });
+    await expect(
+      collectData('Find TV shops Pune', objective, s.llm, s.options, s.dependencies)
+    ).rejects.toThrow('No evidence-backed records');
+    expect(
+      (s.llm.complete as jest.Mock).mock.calls.filter(([system]) =>
+        system.startsWith('Plan recovery')
+      )
+    ).toHaveLength(1);
+  });
+
   it('plans navigation from observed links after validation leaves a shortfall', async () => {
     const s = setup(
       [
@@ -117,7 +431,6 @@ describe('General collection and evidence contracts', () => {
           ],
           follow_links: [],
         },
-        { follow_links: [0, 999] },
         { records: [record('Orbit', '02012345678')] },
       ],
       {
@@ -397,27 +710,14 @@ describe('General collection and evidence contracts', () => {
       (result.records[0]._collection_evidence as Record<string, { quote: string }>).name.quote
     ).toBe('Our TV shop is named Orbit');
   });
-  it('never crawls search hits rejected by ranking, including small result sets', async () => {
-    const s = setup([], { 'https://shops.example/': '<p>Orbit TV Shop 020 1234 5678</p>' });
+  it('ranks relevant sources deterministically without spending model calls', async () => {
+    const s = setup([plan, { records: [record('Orbit TV Shop', '020 1234 5678')] }], {
+      'https://shops.example/': '<p>Orbit TV Shop 020 1234 5678</p>',
+    });
     s.dependencies.search = jest.fn().mockResolvedValue([
       { url: 'https://dictionary.example/shop', title: 'Shop definition', snippet: 'Unrelated' },
       { url: 'https://shops.example/', title: 'Orbit TV Shop Pune', snippet: 'Store contact' },
     ]);
-    s.llm.complete = jest
-      .fn()
-      .mockResolvedValueOnce(JSON.stringify(plan))
-      .mockResolvedValueOnce(JSON.stringify({ preferred_sources: [1, 500, '0'] }))
-      .mockResolvedValueOnce(
-        JSON.stringify({ records: [record('Orbit TV Shop', '020 1234 5678')] })
-      )
-      .mockResolvedValueOnce(
-        JSON.stringify({
-          entity_supported: true,
-          supported_fields: ['name', 'phone'],
-          supported_requirements: [],
-          issues: [],
-        })
-      );
     const result = await collectData(
       'Find TV shops Pune',
       objective,
@@ -426,6 +726,7 @@ describe('General collection and evidence contracts', () => {
       s.dependencies
     );
     expect(result.records).toHaveLength(1);
+    expect(result.report.model_calls).toBe(3); // plan, extraction, batched semantic review
     expect(s.dependencies.fetch).not.toHaveBeenCalledWith(
       expect.stringContaining('dictionary.example'),
       expect.anything()
@@ -485,20 +786,13 @@ describe('General collection and evidence contracts', () => {
       expect.anything()
     );
   });
-  it('replans when ranking rejects every initial result and caps empty recovery rounds', async () => {
+  it('caps recovery at one round when searches return no candidates', async () => {
     const s = setup([], {});
+    s.dependencies.search = jest.fn().mockResolvedValue([]);
     s.llm.complete = jest
       .fn()
       .mockImplementation((system: string) =>
-        Promise.resolve(
-          JSON.stringify(
-            system.startsWith('You plan')
-              ? plan
-              : system.startsWith('Rank observed')
-                ? { preferred_sources: [] }
-                : { queries: [] }
-          )
-        )
+        Promise.resolve(JSON.stringify(system.startsWith('You plan') ? plan : { queries: [] }))
       );
     await expect(
       collectData('Find TV shops Pune', objective, s.llm, s.options, s.dependencies)
@@ -508,7 +802,7 @@ describe('General collection and evidence contracts', () => {
       (s.llm.complete as jest.Mock).mock.calls.filter(([system]) =>
         system.startsWith('Plan recovery')
       )
-    ).toHaveLength(2);
+    ).toHaveLength(1);
   });
   it('can evidence a profile link on a company page without crawling the profile', async () => {
     const wanted: StructuredObjective = {
