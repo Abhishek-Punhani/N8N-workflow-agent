@@ -61,3 +61,16 @@ variable "admin_email" {
   type        = string
   default     = "admin@example.com"
 }
+
+variable "cloudflare_api_token" {
+  description = "Cloudflare API Token"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "cloudflare_zone_id" {
+  description = "Cloudflare Zone ID"
+  type        = string
+  default     = ""
+}
