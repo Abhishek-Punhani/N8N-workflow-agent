@@ -2,6 +2,8 @@ import 'dotenv/config';
 import { setTimeout as delay } from 'node:timers/promises';
 import type { LLMClient } from './intake-agent.js';
 
+const THINKING_HEADROOM_TOKENS = 8192;
+
 /** Single provider for every planning and repair call. No provider/model fallback. */
 export class GeminiLLMClient implements LLMClient {
   private readonly apiKey: string;
@@ -37,14 +39,23 @@ export class GeminiLLMClient implements LLMClient {
             generationConfig: {
               responseMimeType: 'application/json',
               temperature: 1,
-              maxOutputTokens: options?.maxOutputTokens ?? 16384,
+              // Gemini 3 thinking tokens count against maxOutputTokens, so callers' visible-output
+              // budgets get headroom; low thinking keeps latency/cost down for extraction tasks.
+              maxOutputTokens: (options?.maxOutputTokens ?? 16384) + THINKING_HEADROOM_TOKENS,
+              thinkingConfig: { thinkingLevel: 'low' },
             },
           }),
         }
       );
-      if (response.status < 500 || attempt === 2) break;
+      const retryable = response.status === 429 || response.status >= 500;
+      if (!retryable || attempt === 2) break;
+      const retryAfter = Number(response.headers.get('retry-after'));
       await response.body?.cancel();
-      await delay(1000 * 2 ** attempt, undefined, { signal });
+      const waitMs =
+        Number.isFinite(retryAfter) && retryAfter > 0
+          ? Math.min(retryAfter, 30) * 1000
+          : 1000 * 2 ** (attempt + 2);
+      await delay(waitMs, undefined, { signal });
     }
     // Do not echo upstream bodies: they may contain request contents or credentials.
     if (!response.ok)

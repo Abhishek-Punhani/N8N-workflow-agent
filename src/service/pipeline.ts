@@ -261,6 +261,7 @@ export async function runJob(store: Store, job: Job, config: AppConfig): Promise
           Number(process.env.LIMIT_COLLECTION_RECORDS || '500')
         ),
         maxModelCalls: Number(process.env.LIMIT_COLLECTION_MODEL_CALLS || '40'),
+        maxRefineRounds: Number(process.env.LIMIT_COLLECTION_REFINE_ROUNDS || '1'),
         timeoutMs: Number(process.env.TIMEOUT_COLLECTION_MS || '300000'),
         llmTimeoutMs: config.timeouts.llmRequestMs,
         browser: process.env.COLLECTION_BROWSER_ENABLED !== 'false',

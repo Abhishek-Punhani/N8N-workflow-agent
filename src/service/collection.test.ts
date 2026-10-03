@@ -39,10 +39,13 @@ function setup(
         const input = JSON.parse(data);
         return Promise.resolve(
           JSON.stringify({
-            entity_supported: true,
-            supported_fields: Object.keys(input.values),
-            supported_requirements: input.requirements.map((_: unknown, index: number) => index),
-            issues: [],
+            reviews: input.candidates.map((c: any) => ({
+              id: c.id,
+              entity_supported: true,
+              supported_fields: Object.keys(c.values),
+              supported_requirements: input.requirements.map((_: unknown, index: number) => index),
+              issues: [],
+            })),
           })
         );
       }
@@ -123,7 +126,7 @@ describe('General collection and evidence contracts', () => {
       }
     );
     const result = await collectData(
-      'Collect one TV shop from https://shops.example/',
+      'Collect one TV shop branch from https://shops.example/',
       objective,
       s.llm,
       s.options,
@@ -298,10 +301,15 @@ describe('General collection and evidence contracts', () => {
         system.startsWith('Review extracted')
           ? Promise.resolve(
               JSON.stringify({
-                entity_supported: true,
-                supported_fields: ['name'],
-                supported_requirements: [],
-                issues: ['Phone belongs to another business'],
+                reviews: [
+                  {
+                    id: 0,
+                    entity_supported: true,
+                    supported_fields: ['name'],
+                    supported_requirements: [],
+                    issues: ['Phone belongs to another business'],
+                  },
+                ],
               })
             )
           : original(system, data, signal)
